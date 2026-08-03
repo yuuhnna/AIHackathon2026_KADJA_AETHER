@@ -36,6 +36,7 @@ app.include_router(health_router)
 app.include_router(prediction_router)
 app.include_router(metrics_router)
 app.include_router(zones_router)
+app.include_router(feature_importance_router)
 
 
 @app.get("/")
