@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { ZoneSummary } from "@/lib/types";
 import { downloadCSV } from "@/lib/csv";
-import { REHAB_STATUS_PILL_CLASS, RISK_PILL_CLASS } from "@/lib/colors";
+import { REHAB_STATUS_PILL_CLASS, RISK_PILL_CLASS, RISK_LABEL } from "@/lib/colors";
 import {
   selectEffectiveStatus,
   selectLatestStatusByZone,
@@ -237,19 +237,26 @@ export default function ZoneTable({
               </button>
             </div>
             <div className="flex gap-1">
-              {(["all", "High", "Moderate", "Low"] as const).map((r) => (
+              {(
+                [
+                  { value: "all", label: "ALL" },
+                  { value: "High", label: "TOP 10%" },
+                  { value: "Moderate", label: "NEXT 20%" },
+                  { value: "Low", label: "REMAINING 70%" },
+                ] as const
+              ).map(({ value, label }) => (
                 <button
-                  key={r}
+                  key={value}
                   type="button"
-                  onClick={() => setRiskFilter(r)}
-                  aria-pressed={riskFilter === r}
+                  onClick={() => setRiskFilter(value)}
+                  aria-pressed={riskFilter === value}
                   className={`cursor-pointer font-mono text-[11px] border px-2.5 py-[7px] rounded-sm tracking-wide transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1 ${
-                    riskFilter === r
+                    riskFilter === value
                       ? "border-accent text-white bg-accent font-semibold"
                       : "border-line bg-bg-panel text-muted hover:text-ink hover:border-faint"
                   }`}
                 >
-                  {r === "all" ? "ALL" : r.toUpperCase()}
+                  {label}
                 </button>
               ))}
             </div>
@@ -443,7 +450,7 @@ export default function ZoneTable({
                       <span
                         className={`inline-block px-2 py-0.5 rounded-sm font-mono text-[10.5px] ${RISK_PILL_CLASS[z.risk_class]}`}
                       >
-                        {z.risk_class.toUpperCase()}
+                        {RISK_LABEL[z.risk_class]}
                       </span>
                     </div>
                   </td>

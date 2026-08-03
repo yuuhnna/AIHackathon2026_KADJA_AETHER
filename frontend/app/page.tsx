@@ -19,9 +19,9 @@ const placeholderSummary: SummaryStats = {
 };
 
 const LEGEND_ITEMS = [
-  { label: "Low risk", colorClass: "bg-risk-low" },
-  { label: "Moderate risk", colorClass: "bg-risk-moderate" },
-  { label: "High risk", colorClass: "bg-risk-high" },
+  { label: "Top 10%", colorClass: "bg-risk-high" },
+  { label: "Next 20%", colorClass: "bg-risk-moderate" },
+  { label: "Remaining 70%", colorClass: "bg-risk-low" },
 ] as const;
 
 export default function Home() {
@@ -106,22 +106,32 @@ export default function Home() {
             )}
           </div>
 
-          <div className="flex items-center gap-5 mt-3 px-3 py-2 flex-wrap font-mono text-[11px] text-muted">
-            {LEGEND_ITEMS.map((item) => (
-              <span key={item.label} className="inline-flex items-center gap-1.5">
-                <span className={`w-2.5 h-2.5 rounded-full inline-block ${item.colorClass}`} />
-                {item.label}
+          <div className="mt-3 px-3 py-2.5">
+            <div className="mb-2">
+              <span className="font-display text-[12px] font-semibold text-ink">
+                AETHER Priority Ranking
               </span>
-            ))}
-            <span className="inline-flex items-center gap-1.5 ml-auto">
-              <span
-                className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full border border-risk-high text-risk-high text-[10px] font-bold"
-                style={{ background: "rgba(255,255,255,0.15)" }}
-              >
-                N
+              <span className="font-mono text-[10.5px] text-faint ml-2">
+                by predicted mangrove area loss, ranked within each municipality
               </span>
-              <span className="text-faint">= high-risk zones in that cluster</span>
-            </span>
+            </div>
+            <div className="flex items-center gap-5 flex-wrap font-mono text-[11px] text-muted">
+              {LEGEND_ITEMS.map((item) => (
+                <span key={item.label} className="inline-flex items-center gap-1.5">
+                  <span className={`w-2.5 h-2.5 rounded-full inline-block ${item.colorClass}`} />
+                  {item.label}
+                </span>
+              ))}
+              <span className="inline-flex items-center gap-1.5 ml-auto">
+                <span
+                  className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full border border-risk-high text-risk-high text-[10px] font-bold"
+                  style={{ background: "rgba(255,255,255,0.15)" }}
+                >
+                  N
+                </span>
+                <span className="text-faint">= high-risk zones in that cluster</span>
+              </span>
+            </div>
           </div>
         </div>
       </section>
