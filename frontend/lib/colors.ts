@@ -24,3 +24,11 @@ export const REHAB_STATUS_PILL_CLASS: Record<string, string> = {
   "Under Review": "bg-risk-moderate/15 text-risk-moderate border border-risk-moderate/30",
   None: "bg-bg-panel-alt border border-line-soft text-faint",
 };
+
+// Severity rank for sorting — higher number = more urgent. Used by the
+// Rehabilitation Activities repository table's "Risk" column sort.
+export const RISK_SORT_ORDER: Record<RiskClass, number> = {
+  low: 0,
+  moderate: 1,
+  high: 2,
+};
