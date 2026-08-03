@@ -6,6 +6,9 @@ from pathlib import Path
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
 
+API_TITLE = "AETHER API"
+API_VERSION = "1.0.0"
+
 MODEL_PATH = ROOT_DIR / "models" / "aether_v1.joblib"
 FEATURE_IMPORTANCE_PATH = ROOT_DIR / "models" / "feature_importance2.csv"
 FEATURE_TABLE_PATH = ROOT_DIR / "data" / "processed" / "feature_table.csv"
