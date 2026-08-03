@@ -40,6 +40,12 @@ export interface ZoneSummary {
   recommendations: string[];
 }
 
+export interface FeatureImportanceItem {
+  feature: string;
+  label: string;
+  importance: number;
+}
+
 // Rehabilitation activity log — one entry per conservation action a field
 // team has committed to for a zone. Entries originate either from the seed
 // repository (see lib/mockRehabilitation.ts) or from an officer logging a
@@ -78,4 +84,21 @@ export interface RehabActivity {
   /** Optional — field work is often logged against a unit, not a person. */
   officer_name?: string;
   source: "seed" | "logged";
+}
+
+export interface ModelMetrics {
+  mae: number | null;
+  rmse: number | null;
+  r2: number | null;
+  confidence_score: number | null;
+
+  dataset?: {
+    samples: number;
+    features: number;
+  };
+
+  model?: {
+    name: string;
+    version: string;
+  };
 }
