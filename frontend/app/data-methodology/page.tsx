@@ -1,9 +1,89 @@
+import { FEATURE_LABELS } from "@/lib/colors";
 import MethodologySidebar from "@/components/MethodologySidebar";
 import ValidationTable, { EXPERT_VALIDATION_ROWS } from "@/components/ValidationTable";
-import { CpuIcon, WarningIcon } from "@/components/icons";
 
-// Features with a dedicated branch in the recommendation rule engine today.
-// Kept in sync by hand; if a new rule branch is added there, add its key here too.
+const DATA_SOURCES = [
+  {
+    name: "Sentinel-2 (via Google Earth Engine)",
+    use: "NDVI and MVI vegetation indices, cloud-masked median composite",
+  },
+  {
+    name: "SRTM Digital Elevation Model",
+    use: "Elevation and terrain slope",
+  },
+  {
+    name: "Global Mangrove Watch (GMW)",
+    use: "Historical mangrove extent — used as the training label (loss fraction between two time points), not as a live input feature",
+  },
+  {
+    name: "ERA5 (Copernicus Climate Data Store)",
+    use: "Mean temperature, precipitation, wind exposure",
+  },
+  {
+    name: "OpenStreetMap",
+    use: "Distance to nearest road, aquaculture site, and river",
+  },
+];
+
+type FeatureDoc = {
+  key: string;
+  description: string;
+  source: string;
+};
+
+const INPUT_FEATURES: FeatureDoc[] = [
+  {
+    key: "mean_ndvi",
+    description:
+      "General canopy greenness and vigor, derived from Sentinel-2 reflectance. Sensitive to vegetation stress before it becomes visible on the ground.",
+    source: "Sentinel-2",
+  },
+  {
+    key: "mean_mvi",
+    description:
+      "A mangrove-specific vegetation index — distinguishes mangrove stand condition from general greenness, which NDVI alone can't do.",
+    source: "Sentinel-2",
+  },
+  {
+    key: "mean_temperature",
+    description: "Mean air temperature for the zone. Sustained heat stress is linked to canopy dieback.",
+    source: "ERA5",
+  },
+  {
+    key: "annual_precipitation",
+    description:
+      "Total annual rainfall. Both prolonged deficit and abnormal excess are associated with mangrove stress.",
+    source: "ERA5",
+  },
+  {
+    key: "mean_wind_speed",
+    description: "Average wind speed. Higher exposure raises physical storm-damage risk to mangrove stands.",
+    source: "ERA5",
+  },
+  {
+    key: "mean_elevation",
+    description: "Height above sea level. Low-elevation zones face greater tidal inundation and flood exposure.",
+    source: "SRTM",
+  },
+  {
+    key: "mean_slope",
+    description: "Steepness of terrain. Steeper slopes are more prone to erosion and sediment loss.",
+    source: "SRTM",
+  },
+  {
+    key: "nearest_aquaculture_distance_m",
+    description:
+      "Distance to the nearest aquaculture site. Closer proximity indicates higher land-conversion pressure.",
+    source: "OpenStreetMap",
+  },
+  {
+    key: "nearest_river_distance_m",
+    description:
+      "Distance to the nearest river. Affects freshwater and sediment connectivity important for recovery.",
+    source: "OpenStreetMap",
+  },
+];
+
 const RULE_COVERED_FEATURES = new Set([
   "mean_ndvi",
   "mean_mvi",
@@ -11,6 +91,7 @@ const RULE_COVERED_FEATURES = new Set([
   "nearest_aquaculture_distance_m",
   "nearest_river_distance_m",
 ]);
+
 
 export default function MethodologyPage() {
   return (
@@ -438,61 +519,176 @@ export default function MethodologyPage() {
         </div>
       </div>
 
-        <div
-          id="recommendation-engine"
-          className="bg-bg-panel border border-line rounded-2xl shadow-[0_2px_8px_-2px_rgba(22,36,30,0.08),0_1px_2px_rgba(22,36,30,0.04)] overflow-hidden mb-5 scroll-mt-7"
-        >
-          <div className="flex justify-between items-center px-4.5 py-3.5 border-b border-line bg-bg-panel-alt">
-            <h2 className="font-display text-sm font-semibold flex items-center gap-2 text-accent">
-              <CpuIcon />
-              <span className="text-ink">Recommendation engine &amp; expert validation</span>
-            </h2>
-            <span className="font-mono text-[11px] text-faint">PENRO Guimaras (DENR)</span>
-          </div>
-          <div className="p-4.5">
-            <div className="text-[12.5px] text-muted leading-relaxed space-y-3 mb-4">
-              <p>
-                <strong className="text-ink">Model:</strong> Random Forest Regressor (scikit-learn),
-                trained on the model&apos;s input features. <strong className="text-ink">Explainability:</strong>{" "}
-                SHAP (TreeExplainer) attributes each prediction to its top contributing factors.
-              </p>
-              <p>
-                <strong className="text-ink">Recommendations:</strong> conservation actions come from a
-                fixed, rule-based engine (
-                <code className="text-[11px] bg-bg-panel-alt px-1 rounded-sm">recommend.py</code>) —
-                not the model itself — so they stay transparent and auditable rather than model-generated.
-                The full rule base below was submitted to{" "}
-                <strong className="text-ink">PENRO Guimaras (DENR)</strong> for expert review.
-              </p>
-            </div>
-
-            <div className="flex items-start gap-2 text-[12px] text-risk-moderate bg-risk-moderate/10 border border-risk-moderate/40 rounded-sm px-3 py-2.5 mb-4">
-              <WarningIcon className="mt-0.5 shrink-0" />
-              <span>
-                <strong>Coverage gap:</strong> the rule base spans all input features across{" "}
-                {EXPERT_VALIDATION_ROWS.length} scenarios (single and combined drivers), but the
-                currently deployed engine only implements rule branches for{" "}
-                {RULE_COVERED_FEATURES.size} of them — NDVI, MVI, elevation, and distance to
-                aquaculture/river. Temperature-, precipitation-, wind-, and slope-triggered
-                recommendations are part of the validated rule base but not yet wired into the live
-                API.
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between mb-2">
-              <div className="text-[10.5px] uppercase tracking-wider text-faint">
-                Expert validation table — click a row for field-validation detail
-              </div>
-              <span className="font-mono text-[10px] text-faint">
-                0 / {EXPERT_VALIDATION_ROWS.length} signed off
-              </span>
-            </div>
-            <ValidationTable rows={EXPERT_VALIDATION_ROWS} />
-          </div>
+<div id="input-features" className="bg-bg-panel border border-line rounded-2xl shadow-[0_2px_8px_-2px_rgba(22,36,30,0.08),0_1px_2px_rgba(22,36,30,0.04)] overflow-hidden mb-5 scroll-mt-7">
+        <div className="flex justify-between items-center px-4.5 py-3.5 border-b border-line bg-bg-panel-alt">
+          <h2 className="font-display text-sm font-semibold flex items-center gap-2 text-accent">
+            <span className="text-ink">Input features</span>
+          </h2>
+          <span className="font-mono text-[11px] text-faint">{INPUT_FEATURES.length} features</span>
         </div>
-
+        <div className="p-4.5">
+          <div className="divide-y divide-line-soft">
+            {INPUT_FEATURES.map((f) => (
+              <div key={f.key} className="py-2.5 first:pt-0 last:pb-0">
+                <div className="flex justify-between items-baseline gap-2">
+                  <div className="text-[12.5px] font-semibold text-ink">{FEATURE_LABELS[f.key]}</div>
+                  <span className="font-mono text-[10px] text-faint shrink-0">{f.source}</span>
+                </div>
+                <div className="text-[12px] text-muted mt-0.5">{f.description}</div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
-    </div>
+
+      <div
+        id="data-sources"
+        className="bg-bg-panel border border-line rounded-2xl shadow-[0_2px_8px_-2px_rgba(22,36,30,0.08),0_1px_2px_rgba(22,36,30,0.04)] overflow-hidden mb-5 scroll-mt-7"
+      >
+            <div className="flex justify-between items-center px-4.5 py-3.5 border-b border-line bg-bg-panel-alt">
+              <h2 className="font-display text-sm font-semibold flex items-center gap-2 text-accent">
+                <span className="text-ink">Data sources</span>
+              </h2>
+              <span className="font-mono text-[11px] text-faint">{DATA_SOURCES.length} sources</span>
+            </div>
+            <div className="p-4.5">
+              <div className="divide-y divide-line-soft">
+                {DATA_SOURCES.map((source) => (
+                  <div key={source.name} className="py-3 first:pt-0 last:pb-0">
+                    <div className="text-[12.5px] font-semibold text-ink">{source.name}</div>
+                    <div className="text-[12px] text-muted mt-0.5">{source.use}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+<div
+            id="recommendation-engine"
+            className="bg-bg-panel border border-line rounded-2xl shadow-[0_2px_8px_-2px_rgba(22,36,30,0.08),0_1px_2px_rgba(22,36,30,0.04)] overflow-hidden mb-5 scroll-mt-7"
+          >
+            <div className="flex justify-between items-center px-4.5 py-3.5 border-b border-line bg-bg-panel-alt">
+              <h2 className="font-display text-sm font-semibold flex items-center gap-2 text-accent">
+                <span className="text-ink">Recommendation engine &amp; expert validation</span>
+              </h2>
+              <span className="font-mono text-[11px] text-faint">PENRO Guimaras (DENR)</span>
+            </div>
+            <div className="p-4.5">
+              <div className="text-[12.5px] text-muted leading-relaxed space-y-3 mb-4">
+                <p>
+                  <strong className="text-ink">Model:</strong> Random Forest Regressor (scikit-learn),
+                  trained on the 10 input features above. <strong className="text-ink">Explainability:</strong>{" "}
+                  SHAP (TreeExplainer) attributes each prediction to its top contributing factors.
+                </p>
+                <p>
+                  <strong className="text-ink">Recommendations:</strong> conservation actions come from a
+                  fixed, rule-based engine (
+                  <code className="text-[11px] bg-bg-panel-alt px-1 rounded-sm">app/recommend.py</code>) —
+                  not the model itself — so they stay transparent and auditable rather than model-generated.
+                  The full rule base below was submitted to{" "}
+                  <strong className="text-ink">PENRO Guimaras (DENR)</strong> for expert review.
+                </p>
+              </div>
+
+              <div className="flex items-start gap-2 text-[12px] text-risk-moderate bg-risk-moderate/10 border border-risk-moderate/40 rounded-sm px-3 py-2.5 mb-4">
+                <span>
+                  <strong>Coverage gap:</strong> the rule base spans all 10 features across{" "}
+                  {EXPERT_VALIDATION_ROWS.length} scenarios (single and combined drivers), but the
+                  currently deployed engine only implements rule branches for{" "}
+                  {RULE_COVERED_FEATURES.size} of them — NDVI, MVI, elevation, and distance to
+                  road/aquaculture/river. Temperature-, precipitation-, wind-, and slope-triggered
+                  recommendations are part of the validated rule base but not yet wired into the live
+                  API.
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between mb-2">
+                <div className="text-[10.5px] uppercase tracking-wider text-faint">
+                  Expert validation table — click a row for field-validation detail
+                </div>
+                <span className="font-mono text-[10px] text-faint">
+                  0 / {EXPERT_VALIDATION_ROWS.length} signed off
+                </span>
+              </div>
+              <ValidationTable rows={EXPERT_VALIDATION_ROWS} />
+            </div>
+          </div>
+
+          <div
+            id="scope-limitations"
+            className="bg-bg-panel border border-line rounded-2xl shadow-[0_2px_8px_-2px_rgba(22,36,30,0.08),0_1px_2px_rgba(22,36,30,0.04)] overflow-hidden scroll-mt-7"
+          >
+            <div className="flex justify-between items-center px-4.5 py-3.5 border-b border-line bg-bg-panel-alt">
+              <h2 className="font-display text-sm font-semibold flex items-center gap-2 text-accent">
+                <span className="text-ink">Scope, bias &amp; limitations</span>
+              </h2>
+            </div>
+            <div className="p-4.5">
+              <ul className="space-y-3.5">
+                <li className="flex gap-2.5">
+                  <span className="font-mono text-[10.5px] uppercase tracking-wider text-faint mt-0.5 shrink-0 w-20">
+                    Geography
+                  </span>
+                  <span className="text-[12.5px] text-muted leading-relaxed">
+                    Monitored zones are in <strong className="text-ink">Iloilo Province</strong>. The
+                    recommendation rule base above was reviewed by{" "}
+                    <strong className="text-ink">PENRO Guimaras</strong> — a neighboring province, not
+                    the modeled area&apos;s own jurisdiction. Treat that review as a reasonable
+                    regional-expertise proxy, not a substitute for Iloilo-based DENR/CENRO sign-off.
+                  </span>
+                </li>
+                <li className="flex gap-2.5">
+                  <span className="font-mono text-[10.5px] uppercase tracking-wider text-faint mt-0.5 shrink-0 w-20">
+                    Data
+                  </span>
+                  <span className="text-[12.5px] text-muted leading-relaxed">
+                    <code className="text-[11px] bg-bg-panel-alt px-1 rounded-sm">nearest_aquaculture_distance_m</code>{" "}
+                    and <code className="text-[11px] bg-bg-panel-alt px-1 rounded-sm">nearest_river_distance_m</code>{" "}
+                    are currently null for every monitored zone — those layers haven&apos;t been
+                    integrated yet, which is why every zone is flagged with a low-confidence
+                    placeholder. The model still returns a score for all of them; predictions are{" "}
+                    <strong className="text-ink">not</strong> currently restricted to zones with a
+                    complete feature set.
+                  </span>
+                </li>
+                <li className="flex gap-2.5">
+                  <span className="font-mono text-[10.5px] uppercase tracking-wider text-faint mt-0.5 shrink-0 w-20">
+                    Validation
+                  </span>
+                  <span className="text-[12.5px] text-muted leading-relaxed">
+                    As of this submission, 0 of the {EXPERT_VALIDATION_ROWS.length} rule-base scenarios
+                    have completed expert sign-off. Recommendations should be treated as{" "}
+                    <strong className="text-ink">provisional</strong> pending PENRO/DENR field
+                    validation — not confirmed conservation guidance.
+                  </span>
+                </li>
+                <li className="flex gap-2.5">
+                  <span className="font-mono text-[10.5px] uppercase tracking-wider text-faint mt-0.5 shrink-0 w-20">
+                    Model
+                  </span>
+                  <span className="text-[12.5px] text-muted leading-relaxed">
+                    Trained on placeholder values for the incomplete columns noted above. Retraining
+                    against real proximity/elevation layers (see{" "}
+                    <code className="text-[11px] bg-bg-panel-alt px-1 rounded-sm">
+                      backend/scripts/gee_build_feature_table.py
+                    </code>
+                    ) is required before operational use.
+                  </span>
+                </li>
+                <li className="flex gap-2.5">
+                  <span className="font-mono text-[10.5px] uppercase tracking-wider text-faint mt-0.5 shrink-0 w-20">
+                    Intent
+                  </span>
+                  <span className="text-[12.5px] text-muted leading-relaxed">
+                    This is decision support, not an autonomous decision-maker — every recommendation
+                    above explicitly requires field validation steps before action.
+                  </span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+     </div>
   );
 }
