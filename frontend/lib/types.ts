@@ -13,4 +13,48 @@ export interface ZoneSummary {
   lon: number;
   vulnerability_score: number;
   risk_class: RiskClass;
+  confidence_flag: string;
+  municipality: string;
+  expected_area_loss: number;
+  rehabilitation_status: string;
+}
+
+// Rehabilitation activity log — one entry per conservation action a field
+// team has committed to for a zone. Entries originate either from the seed
+// repository (see lib/mockRehabilitation.ts) or from an officer logging a
+// Recommended Action on the Dashboard.
+export type RehabStatus = "Planned" | "Active" | "Under Review" | "Completed";
+
+export const REHAB_STATUSES: readonly RehabStatus[] = [
+  "Planned",
+  "Active",
+  "Under Review",
+  "Completed",
+] as const;
+
+export interface RehabActivity {
+  id: string;
+  zone_id: string;
+  date: string; // ISO yyyy-mm-dd (date only — no time component)
+  status: RehabStatus;
+  action_category: string;
+  /** Short human-readable headline for the action. */
+  recommendation_name: string;
+  /**
+   * The verbatim recommendation text from the backend's rule engine.
+   * Present only on logged entries — it's the key that groups a
+   * recommendation's entries into its own history.
+   */
+  recommendation_text?: string;
+  /** What the field team actually did. Logged entries only. */
+  action_taken?: string;
+  /** Which body carried out the work. Logged entries only. */
+  implementing_unit?: string;
+  /** Hectares treated, as reported. Never derived or predicted by AETHER. */
+  area_covered_ha?: number;
+  /** Free-text pointer to supporting evidence (photo set, report no.). */
+  evidence_ref?: string;
+  /** Optional — field work is often logged against a unit, not a person. */
+  officer_name?: string;
+  source: "seed" | "logged";
 }
