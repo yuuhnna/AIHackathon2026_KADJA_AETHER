@@ -19,12 +19,6 @@ export function fetchFeatureImportance(): Promise<FeatureImportanceItem[]> {
   return getJSON<FeatureImportanceItem[]>("/api/feature-importance");
 }
 
-export async function fetchModelMetrics(): Promise<ModelMetrics> {
-    const response = await fetch(`${API_BASE}/api/model-metrics`);
-
-    if (!response.ok) {
-        throw new Error("Failed to fetch model metrics.");
-    }
-
-    return await response.json();
+export function fetchModelMetrics(): Promise<ModelMetrics> {
+  return getJSON<ModelMetrics>("/api/model-metrics");
 }
