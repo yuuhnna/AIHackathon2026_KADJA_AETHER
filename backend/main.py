@@ -24,6 +24,7 @@ from app.routes.zones import (
     router as zones_router
 )
 from app.routes.feature_importance import router as feature_importance_router
+from app.routes.summary import router as summary_router
 
 
 app = FastAPI(
@@ -36,6 +37,8 @@ app.include_router(health_router)
 app.include_router(prediction_router)
 app.include_router(metrics_router)
 app.include_router(zones_router)
+app.include_router(feature_importance_router)
+app.include_router(summary_router)
 
 
 @app.get("/")
