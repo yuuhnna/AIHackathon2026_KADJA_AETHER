@@ -12,10 +12,9 @@ export default function MethodologyPage() {
         </p>
       </header>
 
-        <div
-        id="technical-documentation"
-        className="bg-bg-panel border border-line rounded-2xl shadow-[0_2px_8px_-2px_rgba(22,36,30,0.08),0_1px_2px_rgba(22,36,30,0.04)] overflow-hidden mb-5 scroll-mt-7"
-      >
+        <div // technical documentation 
+        id="technical-documentation" 
+        className="bg-bg-panel border border-line rounded-2xl shadow-[0_2px_8px_-2px_rgba(22,36,30,0.08),0_1px_2px_rgba(22,36,30,0.04)] overflow-hidden mb-5 scroll-mt-7">
         <div className="flex justify-between items-center px-4.5 py-3.5 border-b border-line bg-bg-panel-alt">
           <h2 className="font-display text-sm font-semibold flex items-center gap-2 text-accent">
             <span className="text-ink">Technical Documentation</span>
@@ -47,6 +46,52 @@ export default function MethodologyPage() {
           </div>
         </div>
       </div>
+    
+    <div // target limitation 
+        id="target-limitation"
+        className="bg-bg-panel border border-line rounded-2xl shadow-[0_2px_8px_-2px_rgba(22,36,30,0.08),0_1px_2px_rgba(22,36,30,0.04)] overflow-hidden mb-5 scroll-mt-7"
+      >
+        <div className="flex justify-between items-center px-4.5 py-3.5 border-b border-line bg-bg-panel-alt">
+          <h2 className="font-display text-sm font-semibold flex items-center gap-2 text-accent">
+            <span className="text-ink">Target Limitation</span>
+          </h2>
+        </div>
+
+        <div className="p-4.5 space-y-5">
+
+          <div>
+            <p className="text-[12.5px] text-muted leading-relaxed">
+              A proxy target is only trustworthy if its blind spots are documented alongside it. 
+            </p>
+          </div>
+
+          <div>
+            <p className="text-[12.5px] text-muted leading-relaxed">
+          The current target does <strong className="text-ink">not</strong> directly measure:
+            </p>
+          </div>
+
+          <ul className="list-disc list-inside text-[12.5px] text-muted leading-relaxed">
+            <li> Habitat fragmentation </li>
+            <li> Canopy condition</li>
+            <li> Biodiversity decline</li>
+            <li> Regeneration capacity</li>
+            <li> Ecosystem resilience</li>
+            <li> Species composition</li>
+            <li> Hydrological changes</li>
+          </ul>
+
+           <div className="flex items-start gap-2 text-[12px] text-risk-moderate bg-risk-moderate/10 border border-risk-moderate/40 rounded-sm px-3 py-2 mb-4">
+            <span>
+              <strong>WHY THIS IS STATED PLAINLY</strong> 
+              <p>Area loss is real and useful signal, but it is one dimension of degration, not the whole picture. Predictions
+                should be read as &quot;risk of measurable area loss,&quot; not as a general degration score. 
+              </p>
+            </span>
+          </div>
+        </div>
+      </div>
+
     </div>
   );
 }
