@@ -11,6 +11,7 @@
   --bg-panel: #12201A;
   --line: #1E2B24;
   --risk-high: #FF6B6B;
+  --risk-moderate: #FFB454;
   --risk-low: #5CFF9D;
 }
 
@@ -27,6 +28,7 @@
   --color-bg-panel: var(--bg-panel);
   --color-line: var(--line);
   --color-risk-high: var(--risk-high);
+  --color-risk-moderate: var(--risk-moderate);
   --color-risk-low: var(--risk-low);
   --font-display: var(--font-mono);
 }
