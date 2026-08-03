@@ -1,3 +1,7 @@
+"""
+Evaluates the trained Random Forest model using the testing dataset
+and computes regression performance metrics.
+"""
 from sklearn.metrics import(
     mean_absolute_error,
     mean_squared_error,

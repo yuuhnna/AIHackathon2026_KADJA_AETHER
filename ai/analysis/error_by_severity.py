@@ -1,3 +1,15 @@
+"""
+Analyzes the model's prediction error across different mangrove
+change severity levels and visualizes the Mean Absolute Error (MAE)
+for each severity category.
+
+Input:
+    - Prediction results table
+
+Output:
+    - Error-by-severity summarization table
+    - Error summary group by severity
+"""
 import pandas as pd
 import matplotlib.pyplot as plt
 
