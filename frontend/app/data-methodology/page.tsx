@@ -1,4 +1,4 @@
-import NavBar from "@/components/NavBar";
+import MethodologySidebar from "@/components/MethodologySidebar";
 
 export default function MethodologyPage() {
   return (
@@ -12,7 +12,11 @@ export default function MethodologyPage() {
         </p>
       </header>
 
-        <div // technical documentation 
+      <div className="flex gap-6 items-start">
+        <MethodologySidebar />
+        <div className="flex-1 min-w-0">
+
+        <div // technical documentation
         id="technical-documentation" 
         className="bg-bg-panel border border-line rounded-2xl shadow-[0_2px_8px_-2px_rgba(22,36,30,0.08),0_1px_2px_rgba(22,36,30,0.04)] overflow-hidden mb-5 scroll-mt-7">
         <div className="flex justify-between items-center px-4.5 py-3.5 border-b border-line bg-bg-panel-alt">
