@@ -89,49 +89,18 @@ class ModelService:
     def predict_batch(
         self,
         dataframe: pd.DataFrame
-    ) -> pd.DataFrame:
+    ) -> list[float]:
         """
         Batch prediction for multiple zones.
-
-        Used for:
-        - startup preprocessing
-        - dashboard summaries
         """
 
         X = dataframe[
             self.feature_columns
         ]
 
-
         predictions = self.model.predict(X)
 
-        shap_values = self.explainer.shap_values(
-            X
-        )
-
-
-        results = []
-
-
-        for index in range(len(X)):
-
-            results.append(
-                {
-                    "vulnerability_score": round(
-                        float(predictions[index]),
-                        4
-                    ),
-
-                    "top_factors":
-                        self._top_factors(
-                            shap_values[index],
-                            top_n=10
-                        )
-                }
-            )
-
-
-        return pd.DataFrame(results)
+        return predictions.tolist()
 
 
     def _top_factors(
