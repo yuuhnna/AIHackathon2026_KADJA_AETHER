@@ -32,3 +32,16 @@ export const RISK_SORT_ORDER: Record<RiskClass, number> = {
   moderate: 1,
   high: 2,
 };
+
+
+export const FEATURE_LABELS: Record<string, string> = {
+  mean_ndvi: "Vegetation health (NDVI)",
+  mean_mvi: "Mangrove-specific vegetation (MVI)",
+  mean_temperature: "Mean air temperature",
+  annual_precipitation: "Annual precipitation",
+  mean_wind_speed: "Mean wind exposure",
+  mean_elevation: "Elevation above sea level",
+  mean_slope: "Terrain slope",
+  nearest_aquaculture_distance_m: "Proximity to aquaculture",
+  nearest_river_distance_m: "Proximity to rivers",
+};
