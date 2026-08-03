@@ -12,6 +12,7 @@ API_VERSION = "1.0.0"
 MODEL_PATH = ROOT_DIR / "models" / "aether_v1.joblib"
 FEATURE_IMPORTANCE_PATH = ROOT_DIR / "models" / "feature_importance2.csv"
 FEATURE_TABLE_PATH = ROOT_DIR / "data" / "processed" / "feature_table.csv"
+METRICS_PATH = ROOT_DIR / "artifacts" / "metrics.json"
 
 # Column names AND ORDER match exactly what aether_v1.joblib was
 # trained on (see training/preprocessing/feature_selection.py's
