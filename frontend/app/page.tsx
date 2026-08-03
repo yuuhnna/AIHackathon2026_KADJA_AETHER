@@ -6,7 +6,7 @@ import KpiRow from "@/components/KpiRow";
 import ZoneTable from "@/components/ZoneTable";
 import DetailPanel from "@/components/DetailPanel";
 import { MapPinIcon, CloseIcon } from "@/components/icons";
-import { MOCK_ZONES } from "@/lib/mockZones";
+import { fetchZones } from "@/lib/api";
 import type { SummaryStats, ZoneSummary } from "@/lib/types";
 
 const RealMap = dynamic(() => import("@/components/RealMap"), { ssr: false });
@@ -19,17 +19,43 @@ const placeholderSummary: SummaryStats = {
 };
 
 const LEGEND_ITEMS = [
-  { label: "Low risk", colorClass: "bg-risk-low" },
-  { label: "Moderate risk", colorClass: "bg-risk-moderate" },
-  { label: "High risk", colorClass: "bg-risk-high" },
+  { label: "Top 10%", colorClass: "bg-risk-high" },
+  { label: "Next 20%", colorClass: "bg-risk-moderate" },
+  { label: "Remaining 70%", colorClass: "bg-risk-low" },
 ] as const;
 
 export default function Home() {
+  const [zones, setZones] = useState<ZoneSummary[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   const [selectedZoneId, setSelectedZoneId] = useState<string | null>(null);
-  const [filteredZones, setFilteredZones] = useState<ZoneSummary[]>(MOCK_ZONES);
+  const [filteredZones, setFilteredZones] = useState<ZoneSummary[]>([]);
+
+  // Fetch real zones from the backend once on mount.
+  useEffect(() => {
+    let cancelled = false;
+
+    fetchZones()
+      .then((data) => {
+        if (cancelled) return;
+        setZones(data);
+        setFilteredZones(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        setError(err instanceof Error ? err.message : "Failed to load zones.");
+        setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const selectedZone =
-    MOCK_ZONES.find((z) => z.zone_id === selectedZoneId) ?? null;
+    zones.find((z) => z.zone_id === selectedZoneId) ?? null;
 
   // Keeps the panel's content populated during the slide-out animation —
   // without this, the content would disappear instantly (selectedZone
@@ -45,6 +71,13 @@ export default function Home() {
     <main className="flex flex-1 flex-col px-6 pt-2 pb-8 gap-5">
       <KpiRow summary={placeholderSummary} />
 
+      {error && (
+        <div className="rounded-lg border border-risk-high/30 bg-risk-high/5 px-4 py-3 text-[12.5px] text-risk-high">
+          Couldn&apos;t load zones from the server: {error}. Is the backend running at{" "}
+          <code className="font-mono">http://localhost:8000</code>?
+        </div>
+      )}
+
       <section className="bg-bg-panel border border-line rounded-2xl overflow-hidden relative">
         <header className="flex justify-between items-center px-5 py-3.5 border-b border-line bg-bg-panel-alt">
           <h2 className="font-display text-sm font-semibold flex items-center gap-2">
@@ -52,7 +85,7 @@ export default function Home() {
             <span className="text-ink">Zone map</span>
           </h2>
           <span className="font-mono text-[10.5px] uppercase tracking-wide text-faint">
-            {MOCK_ZONES.length} zones plotted
+            {loading ? "Loading…" : `${zones.length} zones plotted`}
           </span>
         </header>
 
@@ -106,22 +139,32 @@ export default function Home() {
             )}
           </div>
 
-          <div className="flex items-center gap-5 mt-3 px-3 py-2 flex-wrap font-mono text-[11px] text-muted">
-            {LEGEND_ITEMS.map((item) => (
-              <span key={item.label} className="inline-flex items-center gap-1.5">
-                <span className={`w-2.5 h-2.5 rounded-full inline-block ${item.colorClass}`} />
-                {item.label}
+          <div className="mt-3 px-3 py-2.5">
+            <div className="mb-2">
+              <span className="font-display text-[12px] font-semibold text-ink">
+                AETHER Priority Ranking
               </span>
-            ))}
-            <span className="inline-flex items-center gap-1.5 ml-auto">
-              <span
-                className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full border border-risk-high text-risk-high text-[10px] font-bold"
-                style={{ background: "rgba(255,255,255,0.15)" }}
-              >
-                N
+              <span className="font-mono text-[10.5px] text-faint ml-2">
+                by predicted mangrove area loss, ranked within each municipality
               </span>
-              <span className="text-faint">= high-risk zones in that cluster</span>
-            </span>
+            </div>
+            <div className="flex items-center gap-5 flex-wrap font-mono text-[11px] text-muted">
+              {LEGEND_ITEMS.map((item) => (
+                <span key={item.label} className="inline-flex items-center gap-1.5">
+                  <span className={`w-2.5 h-2.5 rounded-full inline-block ${item.colorClass}`} />
+                  {item.label}
+                </span>
+              ))}
+              <span className="inline-flex items-center gap-1.5 ml-auto">
+                <span
+                  className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full border border-risk-high text-risk-high text-[10px] font-bold"
+                  style={{ background: "rgba(255,255,255,0.15)" }}
+                >
+                  N
+                </span>
+                <span className="text-faint">= high-risk zones in that cluster</span>
+              </span>
+            </div>
           </div>
         </div>
       </section>
@@ -131,7 +174,7 @@ export default function Home() {
           Zone Summary
         </h2>
         <ZoneTable
-          zones={MOCK_ZONES}
+          zones={zones}
           selectedZoneId={selectedZoneId}
           onSelect={setSelectedZoneId}
           onFilteredZonesChange={setFilteredZones}

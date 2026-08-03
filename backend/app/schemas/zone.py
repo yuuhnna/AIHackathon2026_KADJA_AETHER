@@ -35,6 +35,8 @@ class ZoneSummary(BaseModel):
     vulnerability_score: float
     municipality: str
     expected_area_loss: float
+    risk_class: str
+    confidence_flag: str
 
 
 class ZoneDetail(BaseModel):

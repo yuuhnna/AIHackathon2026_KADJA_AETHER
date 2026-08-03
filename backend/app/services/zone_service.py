@@ -5,7 +5,7 @@ Handles monitored zone assessment using the
 trained AI model.
 """
 
-from app.config import FEATURE_COLUMNS
+from app.config import FEATURE_COLUMNS, LOW_ELEVATION_CONFIDENCE_THRESHOLD_M
 from app.schemas.zone import (
     ZoneSummary,
     ZoneDetail
@@ -24,6 +24,14 @@ import math
 
 ZONE_AREA_HA = 9.0
 
+# Risk classification is ranked WITHIN each municipality (not against a
+# fixed province-wide cutoff) — DENR does not publish an official
+# vulnerability threshold, so the most defensible approach is relative
+# ranking: the most vulnerable zones in each locality stand out as
+# "High" regardless of that municipality's overall baseline.
+RISK_HIGH_PERCENTILE = 0.90   # top 10%
+RISK_MODERATE_PERCENTILE = 0.70  # next 20% (0.70-0.90)
+
 
 class ZoneService:
     """
@@ -34,8 +42,32 @@ class ZoneService:
         self.data_service = get_data_service()
         self.model_service = get_model_service()
         self.recommendation_service = (
-        get_recommendation_service()
-    )
+            get_recommendation_service()
+        )
+
+    def _classify_risk(self, rank_pct: float) -> str:
+        """
+        Classifies a zone's risk level from its percentile rank
+        (0-1) of vulnerability_score within its own municipality.
+        """
+        if rank_pct >= RISK_HIGH_PERCENTILE:
+            return "high"
+        if rank_pct >= RISK_MODERATE_PERCENTILE:
+            return "moderate"
+        return "low"
+
+    def _confidence_flag(self, zone: dict) -> str:
+        """
+        Flags a zone as low-confidence when its elevation reading is
+        near sea level, where satellite-derived measurements tend to
+        be noisier and less reliable.
+        """
+        elevation = zone.get("mean_elevation")
+        if elevation is None or (isinstance(elevation, float) and math.isnan(elevation)):
+            return "low"
+        if elevation < LOW_ELEVATION_CONFIDENCE_THRESHOLD_M:
+            return "low"
+        return "ok"
 
     def get_all_zones(
         self
@@ -58,9 +90,19 @@ class ZoneService:
 
         predictions = self.model_service.predict_batch(X)
 
+        # Attach predictions to a DataFrame so we can rank vulnerability
+        # within each municipality group.
+        df = pd.DataFrame(zones)
+        df["vulnerability_score"] = predictions
+        df["rank_pct"] = df.groupby("municipality")["vulnerability_score"].rank(
+            pct=True, ascending=True
+        )
+
         summaries = []
 
-        for zone, prediction in zip(zones, predictions):
+        for i, zone in enumerate(zones):
+            prediction = predictions[i]
+            rank_pct = df.iloc[i]["rank_pct"]
 
             summaries.append(
                 ZoneSummary(
@@ -72,7 +114,9 @@ class ZoneService:
                     expected_area_loss=round(
                         prediction / 100 * ZONE_AREA_HA,
                         2
-                    )
+                    ),
+                    risk_class=self._classify_risk(rank_pct),
+                    confidence_flag=self._confidence_flag(zone),
                 )
             )
 

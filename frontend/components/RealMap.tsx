@@ -149,15 +149,18 @@ function GlowStyles() {
   return null;
 }
 
-function clusterIcon(cluster: {
-  getChildCount: () => number;
-  getAllChildMarkers: () => L.Marker[];
-}): L.DivIcon {
-  const count = cluster.getChildCount();
+// Typed loosely (not as a strict custom shape) because
+// react-leaflet-cluster's iconCreateFunction prop expects the real
+// Leaflet MarkerCluster type, which has many more methods than just
+// getChildCount/getAllChildMarkers — a narrower custom type caused a
+// structural mismatch TypeScript error on that prop.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function clusterIcon(cluster: any): L.DivIcon {
+  const count: number = cluster.getChildCount();
   const size = count < 10 ? 34 : count < 50 ? 42 : count < 150 ? 50 : 58;
   const innerSize = Math.round(size * 0.78);
 
-  const childMarkers = cluster.getAllChildMarkers();
+  const childMarkers: L.Marker[] = cluster.getAllChildMarkers();
   let highCount = 0;
   let hasModerate = false;
   for (const marker of childMarkers) {
@@ -165,6 +168,12 @@ function clusterIcon(cluster: {
     if (risk === "high") highCount++;
     else if (risk === "moderate") hasModerate = true;
   }
+
+  // Any high-risk zone in the cluster colors the whole cluster red —
+  // a monitoring tool should never let a zone needing field attention
+  // get visually diluted just because it has many "fine" neighbors
+  // nearby. The white corner badge still shows the exact high-risk
+  // count for context.
   const dominantRisk: "high" | "moderate" | "low" =
     highCount > 0 ? "high" : hasModerate ? "moderate" : "low";
   const color = RISK_COLOR[dominantRisk];
@@ -178,8 +187,8 @@ function clusterIcon(cluster: {
           display: flex; align-items: center; justify-content: center;
           border-radius: 9999px;
           background: #ffffff;
-          border: 1.5px solid ${color};
-          color: ${color};
+          border: 1.5px solid ${RISK_COLOR.high};
+          color: ${RISK_COLOR.high};
           font-family: monospace;
           font-weight: 700;
           font-size: 10px;
