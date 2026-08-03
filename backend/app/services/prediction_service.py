@@ -39,7 +39,8 @@ class PredictionService:
         )
 
         return PredictionResponse(
-            next_year_change_pct=prediction
+            next_year_change_pct=
+                prediction["vulnerability_score"]
         )
 
 

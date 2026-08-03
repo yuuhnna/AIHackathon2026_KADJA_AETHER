@@ -16,6 +16,9 @@ from app.services.data_service import (
 from app.services.model_service import (
     get_model_service
 )
+from app.services.recommendation_service import (
+    get_recommendation_service
+)
 import pandas as pd
 import math
 
@@ -30,6 +33,9 @@ class ZoneService:
     def __init__(self):
         self.data_service = get_data_service()
         self.model_service = get_model_service()
+        self.recommendation_service = (
+        get_recommendation_service()
+    )
 
     def get_all_zones(
         self
@@ -100,20 +106,50 @@ class ZoneService:
             else:
                 raw_features[key] = float(value)
 
-        prediction = self.model_service.predict(
-            features
+        prediction_result = (
+            self.model_service.predict(
+                features
+            )  
         )
 
+        
         return ZoneDetail(
+
             zone_id=zone["zone_id"],
+
             lat=zone["lat"],
+
             lon=zone["lon"],
+
             municipality=zone["municipality"],
-            vulnerability_score=prediction,
+
+
+            vulnerability_score=
+                prediction_result[
+                    "vulnerability_score"
+                ],
+
+
             expected_area_loss=round(
-                prediction / 100 * ZONE_AREA_HA,
+                prediction_result[
+                    "vulnerability_score"
+                ] / 100 * ZONE_AREA_HA,
                 2
             ),
+
+
+            top_factors=
+                prediction_result[
+                    "top_factors"
+                ],
+
+
+            recommendations=
+                prediction_result[
+                    "recommendations"
+                ],
+
+
             raw_features=raw_features
         )
 
