@@ -39,6 +39,15 @@ def main():
         y_test
     )
 
+    dataset_info = {
+        "samples": len(df),
+        "features": len(X_train.columns)
+    }
+
+    export_metrics(
+        results,
+        dataset_info
+    )
 
     importance = feature_importance(
         model,
