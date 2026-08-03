@@ -9,7 +9,6 @@ const navLinks = [
 export default function NavBar() {
   return (
     <nav className="flex w-full items-center justify-between border-b border-[#1E2B24] bg-[#0B1410] px-6 py-4">
-      {/* Left: Sentinel mark + Dashboard */}
       <div className="flex items-center gap-8">
         <Link href="/" className="flex items-center gap-3">
           <span className="relative flex h-2 w-2">
@@ -22,14 +21,13 @@ export default function NavBar() {
         </Link>
 
         <Link
-          href="/dashboard"
+          href="/"
           className="flex h-9 items-center justify-center rounded-sm border border-[#2C3D33] bg-[#12201A] px-4 text-xs font-medium uppercase tracking-widest text-[#8FA396] transition-colors hover:border-[#5CFF9D]/40 hover:text-[#E8EDE9]"
         >
           Dashboard
         </Link>
       </div>
 
-      {/* Right: Nav links */}
       <div className="flex items-center gap-7">
         {navLinks.map((link) => (
           <Link
