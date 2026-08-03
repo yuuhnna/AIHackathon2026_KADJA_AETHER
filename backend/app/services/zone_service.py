@@ -16,6 +16,9 @@ from app.services.data_service import (
 from app.services.model_service import (
     get_model_service
 )
+from app.services.recommendation_service import (
+    get_recommendation_service
+)
 import pandas as pd
 import math
 
@@ -38,6 +41,9 @@ class ZoneService:
     def __init__(self):
         self.data_service = get_data_service()
         self.model_service = get_model_service()
+        self.recommendation_service = (
+            get_recommendation_service()
+        )
 
     def _classify_risk(self, rank_pct: float) -> str:
         """
@@ -144,42 +150,50 @@ class ZoneService:
             else:
                 raw_features[key] = float(value)
 
-        prediction = self.model_service.predict(
-            features
+        prediction_result = (
+            self.model_service.predict(
+                features
+            )  
         )
 
-        # Compute this zone's risk rank against others in the same
-        # municipality (mirrors get_all_zones' logic for a single zone).
-        all_zones = self.data_service.get_all_zones()
-        same_municipality = [
-            z for z in all_zones if z["municipality"] == zone["municipality"]
-        ]
-        X_group = pd.DataFrame(
-            [
-                {feat: z[feat] for feat in FEATURE_COLUMNS}
-                for z in same_municipality
-            ]
-        )
-        group_predictions = self.model_service.predict_batch(X_group)
-        group_df = pd.DataFrame({"vulnerability_score": group_predictions})
-        group_df["rank_pct"] = group_df["vulnerability_score"].rank(pct=True, ascending=True)
-        this_zone_index = next(
-            i for i, z in enumerate(same_municipality) if z["zone_id"] == zone_id
-        )
-        rank_pct = group_df.iloc[this_zone_index]["rank_pct"]
-
+        
         return ZoneDetail(
+
             zone_id=zone["zone_id"],
+
             lat=zone["lat"],
+
             lon=zone["lon"],
+
             municipality=zone["municipality"],
-            vulnerability_score=prediction,
+
+
+            vulnerability_score=
+                prediction_result[
+                    "vulnerability_score"
+                ],
+
+
             expected_area_loss=round(
-                prediction / 100 * ZONE_AREA_HA,
+                prediction_result[
+                    "vulnerability_score"
+                ] / 100 * ZONE_AREA_HA,
                 2
             ),
-            risk_class=self._classify_risk(rank_pct),
-            confidence_flag=self._confidence_flag(zone),
+
+
+            top_factors=
+                prediction_result[
+                    "top_factors"
+                ],
+
+
+            recommendations=
+                prediction_result[
+                    "recommendations"
+                ],
+
+
             raw_features=raw_features
         )
 

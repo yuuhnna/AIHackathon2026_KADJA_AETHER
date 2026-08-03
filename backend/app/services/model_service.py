@@ -8,6 +8,13 @@ import joblib
 import pandas as pd
 
 from app.config import MODEL_PATH, FEATURE_COLUMNS
+from app.services.recommendation_service import (
+    get_recommendation_service
+)
+import shap
+import numpy as np
+from app import config
+
 
 class ModelService:
     """
@@ -19,8 +26,16 @@ class ModelService:
         Load the trained model into memory.
         """
         self.model = joblib.load(MODEL_PATH)
+
+        self.explainer = shap.TreeExplainer(
+            self.model
+        )
         self.feature_columns = FEATURE_COLUMNS
-        
+
+        self.recommendation_service = (
+            get_recommendation_service()
+        )
+
 
     def predict(self, features: dict) -> float:
         """
@@ -40,17 +55,137 @@ class ModelService:
 
         prediction = self.model.predict(X)[0]
 
-        return float(prediction)
+        shap_values = self.explainer.shap_values(
+            X
+        )
+
+        top_factors = self._top_factors(
+            shap_values[0],
+            top_n=10
+        )
 
 
-    def predict_batch(self, X: pd.DataFrame) -> list[float]:
+        recommendations = (
+            self.recommendation_service.recommend(
+                top_factors,
+                features
+            )
+        )
+
+
+        return {
+            "vulnerability_score": round(
+                float(prediction),
+                4
+            ),
+
+            "top_factors": top_factors,
+
+            "recommendations": recommendations
+        }
+
+
+
+    def predict_batch(
+        self,
+        dataframe: pd.DataFrame
+    ) -> pd.DataFrame:
         """
-        Predict multiple feature vectors.
+        Batch prediction for multiple zones.
+
+        Used for:
+        - startup preprocessing
+        - dashboard summaries
         """
+
+        X = dataframe[
+            self.feature_columns
+        ]
+
 
         predictions = self.model.predict(X)
 
-        return predictions.tolist()
+        shap_values = self.explainer.shap_values(
+            X
+        )
+
+
+        results = []
+
+
+        for index in range(len(X)):
+
+            results.append(
+                {
+                    "vulnerability_score": round(
+                        float(predictions[index]),
+                        4
+                    ),
+
+                    "top_factors":
+                        self._top_factors(
+                            shap_values[index],
+                            top_n=10
+                        )
+                }
+            )
+
+
+        return pd.DataFrame(results)
+
+
+    def _top_factors(
+        self,
+        shap_row: np.ndarray,
+        top_n: int = 10
+    ) -> list[dict]:
+        """
+        Extract highest contributing features.
+        """
+
+        indexes = np.argsort(
+            -np.abs(shap_row)
+        )[:top_n]
+
+
+        factors = []
+
+
+        for index in indexes:
+
+            feature = (
+                self.feature_columns[index]
+            )
+
+            factors.append(
+                {
+                    "feature": feature,
+
+                    "label":
+                        config.FEATURE_LABELS.get(
+                            feature,
+                            feature
+                        ),
+
+                    "shap_value":
+                        round(
+                            float(shap_row[index]),
+                            4
+                        ),
+
+                    "direction":
+                        (
+                            "increases"
+                            if shap_row[index] > 0
+                            else "decreases"
+                        )
+                }
+            )
+
+
+        return factors
+
+
 
 # Singleton model service
 _model_service = ModelService()
