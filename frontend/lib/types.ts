@@ -7,6 +7,23 @@ export interface SummaryStats {
 
 export type RiskClass = "low" | "moderate" | "high";
 
+export interface ZoneFactor {
+  label: string;
+  value: number;
+}
+
+export interface ZoneRawFeatures {
+  mean_ndvi?: number;
+  mean_mvi?: number;
+  mean_temperature?: number;
+  annual_precipitation?: number;
+  mean_wind_speed?: number;
+  mean_elevation?: number;
+  mean_slope?: number;
+  nearest_aquaculture_distance_m?: number;
+  nearest_river_distance_m?: number;
+}
+
 export interface ZoneSummary {
   zone_id: string;
   lat: number;
@@ -17,6 +34,8 @@ export interface ZoneSummary {
   municipality: string;
   expected_area_loss: number;
   rehabilitation_status: string;
+  top_factors: ZoneFactor[];
+  raw_features?: ZoneRawFeatures;
 }
 
 // Rehabilitation activity log — one entry per conservation action a field
