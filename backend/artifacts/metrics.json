@@ -1,0 +1,14 @@
+{
+    "mae": 6.04842289870486,
+    "rmse": 16.132220545273064,
+    "r2": -0.027457149110580392,
+    "confidence_score": -2.75,
+    "dataset": {
+        "samples": 2559,
+        "features": 9
+    },
+    "model": {
+        "name": "Random Forest Regressor",
+        "version": "1.0"
+    }
+}

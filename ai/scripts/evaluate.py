@@ -49,13 +49,16 @@ def evaluate_model(model, X_test, y_test):
 
 
 
-def export_metrics(results, confidence_score, dataset_info):
+def export_metrics(results, dataset_info):
 
     metrics = {
         "mae": float(results["mae"]),
         "rmse": float(results["rmse"]),
         "r2": float(results["r2"]),
-        "confidence_score": float(confidence_score),
+        "confidence_score": round(
+            float(results["r2"]) * 100,
+            2
+        ),
         "dataset": {
             "samples": int(dataset_info["samples"]),
             "features": int(dataset_info["features"])
