@@ -41,6 +41,15 @@ class ModelService:
         return float(prediction)
 
 
+    def predict_batch(self, X: pd.DataFrame) -> list[float]:
+        """
+        Predict multiple feature vectors.
+        """
+
+        predictions = self.model.predict(X)
+
+        return predictions.tolist()
+
 # Singleton model service
 _model_service = ModelService()
 
