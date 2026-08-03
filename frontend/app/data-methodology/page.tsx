@@ -1,6 +1,15 @@
 import { FEATURE_LABELS } from "@/lib/colors";
 import MethodologySidebar from "@/components/MethodologySidebar";
 import ValidationTable, { EXPERT_VALIDATION_ROWS } from "@/components/ValidationTable";
+import {
+  InfoIcon,
+  TargetIcon,
+  CheckCircleIcon,
+  GridIcon,
+  DatabaseIcon,
+  CpuIcon,
+  WarningIcon,
+} from "@/components/icons";
 
 const DATA_SOURCES = [
   {
@@ -114,6 +123,7 @@ export default function MethodologyPage() {
         className="bg-bg-panel border border-line rounded-2xl shadow-[0_2px_8px_-2px_rgba(22,36,30,0.08),0_1px_2px_rgba(22,36,30,0.04)] overflow-hidden mb-5 scroll-mt-7">
         <div className="flex justify-between items-center px-4.5 py-3.5 border-b border-line bg-bg-panel-alt">
           <h2 className="font-display text-sm font-semibold flex items-center gap-2 text-accent">
+            <InfoIcon />
             <span className="text-ink">Technical Documentation</span>
           </h2>
         </div>
@@ -150,6 +160,7 @@ export default function MethodologyPage() {
       >
         <div className="flex justify-between items-center px-4.5 py-3.5 border-b border-line bg-bg-panel-alt">
           <h2 className="font-display text-sm font-semibold flex items-center gap-2 text-accent">
+            <TargetIcon />
             <span className="text-ink">Target Limitation</span>
           </h2>
         </div>
@@ -194,6 +205,7 @@ export default function MethodologyPage() {
         className="bg-bg-panel border border-line rounded-2xl shadow-[0_2px_8px_-2px_rgba(22,36,30,0.08),0_1px_2px_rgba(22,36,30,0.04)] overflow-hidden mb-5 scroll-mt-7">
         <div className="flex justify-between items-center px-4.5 py-3.5 border-b border-line bg-bg-panel-alt">
           <h2 className="font-display text-sm font-semibold flex items-center gap-2 text-accent">
+            <CheckCircleIcon />
             <span className="text-ink">Feature Justification</span>
           </h2>
         </div>
@@ -522,6 +534,7 @@ export default function MethodologyPage() {
 <div id="input-features" className="bg-bg-panel border border-line rounded-2xl shadow-[0_2px_8px_-2px_rgba(22,36,30,0.08),0_1px_2px_rgba(22,36,30,0.04)] overflow-hidden mb-5 scroll-mt-7">
         <div className="flex justify-between items-center px-4.5 py-3.5 border-b border-line bg-bg-panel-alt">
           <h2 className="font-display text-sm font-semibold flex items-center gap-2 text-accent">
+            <GridIcon />
             <span className="text-ink">Input features</span>
           </h2>
           <span className="font-mono text-[11px] text-faint">{INPUT_FEATURES.length} features</span>
@@ -547,6 +560,7 @@ export default function MethodologyPage() {
       >
             <div className="flex justify-between items-center px-4.5 py-3.5 border-b border-line bg-bg-panel-alt">
               <h2 className="font-display text-sm font-semibold flex items-center gap-2 text-accent">
+                <DatabaseIcon />
                 <span className="text-ink">Data sources</span>
               </h2>
               <span className="font-mono text-[11px] text-faint">{DATA_SOURCES.length} sources</span>
@@ -569,6 +583,7 @@ export default function MethodologyPage() {
           >
             <div className="flex justify-between items-center px-4.5 py-3.5 border-b border-line bg-bg-panel-alt">
               <h2 className="font-display text-sm font-semibold flex items-center gap-2 text-accent">
+                <CpuIcon />
                 <span className="text-ink">Recommendation engine &amp; expert validation</span>
               </h2>
               <span className="font-mono text-[11px] text-faint">PENRO Guimaras (DENR)</span>
@@ -620,6 +635,7 @@ export default function MethodologyPage() {
           >
             <div className="flex justify-between items-center px-4.5 py-3.5 border-b border-line bg-bg-panel-alt">
               <h2 className="font-display text-sm font-semibold flex items-center gap-2 text-accent">
+                <WarningIcon />
                 <span className="text-ink">Scope, bias &amp; limitations</span>
               </h2>
             </div>

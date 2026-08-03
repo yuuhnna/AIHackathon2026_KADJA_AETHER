@@ -1,7 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { DatabaseIcon, WarningIcon, GridIcon, CpuIcon } from "@/components/icons";
+import {
+  InfoIcon,
+  TargetIcon,
+  CheckCircleIcon,
+  GridIcon,
+  DatabaseIcon,
+  CpuIcon,
+  WarningIcon,
+} from "@/components/icons";
 
 type IconComponent = (props: { className?: string }) => React.ReactElement;
 
@@ -10,10 +18,13 @@ type IconComponent = (props: { className?: string }) => React.ReactElement;
 // `scroll-mt-7` class) whenever a new section is added to the page —
 // nothing else needs to change for it to show up and auto-highlight here.
 const SECTIONS: { id: string; label: string; icon: IconComponent }[] = [
-  { id: "technical-documentation", label: "Technical Documentation", icon: DatabaseIcon },
-  { id: "target-limitation", label: "Target Limitation", icon: WarningIcon },
-  { id: "feature-justification", label: "Feature Justification", icon: GridIcon },
+  { id: "technical-documentation", label: "Technical Documentation", icon: InfoIcon },
+  { id: "target-limitation", label: "Target Limitation", icon: TargetIcon },
+  { id: "feature-justification", label: "Feature Justification", icon: CheckCircleIcon },
+  { id: "input-features", label: "Input Features", icon: GridIcon },
+  { id: "data-sources", label: "Data Sources", icon: DatabaseIcon },
   { id: "recommendation-engine", label: "Recommendation Engine", icon: CpuIcon },
+  { id: "scope-limitations", label: "Scope, Bias & Limitations", icon: WarningIcon },
 ];
 
 export default function MethodologySidebar() {
