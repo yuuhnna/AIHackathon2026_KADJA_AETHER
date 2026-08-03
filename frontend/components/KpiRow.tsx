@@ -46,7 +46,7 @@ export default function KpiRow({ summary }: { summary: SummaryStats }) {
       {kpis.map((kpi) => (
         <div
           key={kpi.label}
-          className="group bg-bg-panel border border-line rounded-2xl p-5 transition-all duration-200 hover:border-line hover:-translate-y-0.5 hover:shadow-[0_8px_24px_-8px_rgba(0,0,0,0.4)]"
+          className="group bg-bg-panel border border-line rounded-2xl p-5 transition-all duration-200 hover:border-line hover:-translate-y-0.5 hover:shadow-[0_8px_24px_-8px_rgba(22,36,30,0.18)]"
         >
           <div className="flex items-center justify-between mb-4">
             <div className="text-[10.5px] uppercase tracking-widest text-muted font-medium leading-tight max-w-[70%]">
