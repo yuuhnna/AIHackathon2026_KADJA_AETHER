@@ -1,0 +1,123 @@
+// SEED DATA for monitored zones — stands in for the AI model's feature
+// table until a real endpoint exists (see AI/data/raw/processed/feature_table.csv
+// for the eventual real source). Zone ids here are shared with
+// lib/mockRehabilitation.ts's SEED_ACTIVITIES, so a zone's map marker, KPI
+// figures, and rehabilitation history all refer to the same place.
+
+import type { ZoneSummary } from "./types";
+
+export const MOCK_ZONES: ZoneSummary[] = [
+  {
+    zone_id: "ESTANCIA-0001",
+    lat: 11.20,
+    lon: 123.02,
+    vulnerability_score: 0.78,
+    risk_class: "high",
+    confidence_flag: "ok",
+    municipality: "Estancia",
+    expected_area_loss: 78,
+    rehabilitation_status: "Completed",
+  },
+  {
+    zone_id: "ANILAO-0001",
+    lat: 10.75,
+    lon: 122.28,
+    vulnerability_score: 0.52,
+    risk_class: "moderate",
+    confidence_flag: "ok",
+    municipality: "Anilao",
+    expected_area_loss: 52,
+    rehabilitation_status: "Active",
+  },
+  {
+    zone_id: "ESTANCIA-0003",
+    lat: 11.15,
+    lon: 122.95,
+    vulnerability_score: 0.71,
+    risk_class: "high",
+    confidence_flag: "low",
+    municipality: "Estancia",
+    expected_area_loss: 71,
+    rehabilitation_status: "Active",
+  },
+  {
+    zone_id: "ZARRAGA-0001",
+    lat: 10.85,
+    lon: 122.58,
+    vulnerability_score: 0.48,
+    risk_class: "moderate",
+    confidence_flag: "ok",
+    municipality: "Zarraga",
+    expected_area_loss: 48,
+    rehabilitation_status: "Planned",
+  },
+  {
+    zone_id: "CARLES-0001",
+    lat: 11.22,
+    lon: 123.03,
+    vulnerability_score: 0.55,
+    risk_class: "moderate",
+    confidence_flag: "ok",
+    municipality: "Carles",
+    expected_area_loss: 55,
+    rehabilitation_status: "Planned",
+  },
+  {
+    zone_id: "CARLES-0002",
+    lat: 11.18,
+    lon: 122.98,
+    vulnerability_score: 0.22,
+    risk_class: "low",
+    confidence_flag: "ok",
+    municipality: "Carles",
+    expected_area_loss: 22,
+    rehabilitation_status: "Completed",
+  },
+  {
+    zone_id: "BANATE-0003",
+    lat: 11.05,
+    lon: 122.85,
+    vulnerability_score: 0.68,
+    risk_class: "high",
+    confidence_flag: "ok",
+    municipality: "Banate",
+    expected_area_loss: 68,
+    rehabilitation_status: "Under Review",
+  },
+  {
+    zone_id: "ILOILOCITY-0003",
+    lat: 10.70,
+    lon: 122.56,
+    vulnerability_score: 0.44,
+    risk_class: "moderate",
+    confidence_flag: "low",
+    municipality: "Iloilo City",
+    expected_area_loss: 44,
+    rehabilitation_status: "Under Review",
+  },
+  // Monitored zones with no rehabilitation history yet — present on the map
+  // and in KPI totals, but absent from the Rehabilitation Activities
+  // repository (which only lists zones with at least one logged activity).
+  {
+    zone_id: "SARA-0001",
+    lat: 11.10,
+    lon: 122.75,
+    vulnerability_score: 0.18,
+    risk_class: "low",
+    confidence_flag: "ok",
+    municipality: "Sara",
+    expected_area_loss: 18,
+    rehabilitation_status: "None",
+  },
+  {
+    zone_id: "DUMANGAS-0001",
+    lat: 10.83,
+    lon: 122.70,
+    vulnerability_score: 0.40,
+    risk_class: "moderate",
+    confidence_flag: "ok",
+    municipality: "Dumangas",
+    expected_area_loss: 40,
+    rehabilitation_status: "None",
+  },
+];
