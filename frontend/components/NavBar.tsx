@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 const navLinks = [
@@ -9,16 +10,17 @@ const navLinks = [
 export default function NavBar() {
   return (
     <nav className="flex w-full items-center justify-between border-b border-[#1E2B24] bg-[#0B1410] px-6 py-4">
-      {/* Left: Sentinel mark + Dashboard */}
+      {/* Left: Logo + Dashboard */}
       <div className="flex items-center gap-8">
-        <Link href="/" className="flex items-center gap-3">
-          <span className="relative flex h-2 w-2">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#5CFF9D] opacity-60" />
-            <span className="relative inline-flex h-2 w-2 rounded-full bg-[#5CFF9D]" />
-          </span>
-          <span className="font-mono text-lg font-semibold tracking-tight text-[#E8EDE9]">
-            AETHER
-          </span>
+        <Link href="/" className="flex items-center">
+          <Image
+            src="/aether-logo-green.png"
+            alt="AETHER"
+            width={1424}
+            height={507}
+            priority
+            className="h-8 w-auto"
+          />
         </Link>
 
         <Link
