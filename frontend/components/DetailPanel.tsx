@@ -1,5 +1,5 @@
 import type { ZoneSummary } from "@/lib/types";
-import { RISK_PILL_CLASS } from "@/lib/colors";
+import { RISK_LABEL } from "@/lib/colors";
 
 function AlertIcon({ className }: { className?: string }) {
   return (
@@ -79,16 +79,12 @@ export default function DetailPanel({
     <div>
       <section>
         <SectionLabel>Predicted mangrove area loss</SectionLabel>
-        <div className="flex items-center gap-3.5">
-          <div className={`font-display text-[44px] font-bold leading-none ${textColorClass}`}>
-            {zone.expected_area_loss.toFixed(2)}%
-          </div>
-          <span
-            className={`inline-flex items-center px-3.5 py-1.5 rounded-md font-mono text-[12.5px] font-semibold tracking-wide ${RISK_PILL_CLASS[zone.risk_class]}`}
-          >
-            {zone.risk_class.toUpperCase()} RISK
-          </span>
+        <div className={`font-display text-[44px] font-bold leading-none ${textColorClass}`}>
+          {zone.expected_area_loss.toFixed(2)}%
         </div>
+        <p className="text-[10.5px] text-faint mt-1.5">
+          <span className={textColorClass}>{RISK_LABEL[zone.risk_class]}</span> among monitored zones in {zone.municipality}
+        </p>
       </section>
 
       <section className="mt-4">
@@ -125,12 +121,15 @@ export default function DetailPanel({
       </section>
 
       <section className="mt-5 pt-4 border-t border-line">
-        <div className="flex items-center gap-2 mb-2">
+        <div className="flex items-center gap-2 mb-1">
           <span className="w-2 h-2 bg-accent rounded-sm inline-block shrink-0" />
           <span className="text-[11px] font-semibold uppercase tracking-wider text-accent">
-            Recommended actions
+            Priority actions
           </span>
         </div>
+        <p className="text-[10.5px] text-faint mb-2.5">
+          Recommended based on this zone's ranking and contributing factors.
+        </p>
 
         <button
           type="button"
