@@ -202,3 +202,17 @@ export function TrendUpIcon({ className }: IconProps) {
     </svg>
   );
 }
+
+export function LeafIcon({ className }: IconProps) {
+  return (
+    <svg width="14" height="14" viewBox="0 0 20 20" fill="none" aria-hidden="true" className={className}>
+      <path
+        d="M3.5 16.5c6.5 0 11.5-5 12.5-13C8 4.5 3.5 9.5 3.5 16.5z"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinejoin="round"
+      />
+      <path d="M5 15c3.3-3.3 6.7-6.7 10-10.8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  );
+}

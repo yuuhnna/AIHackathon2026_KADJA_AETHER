@@ -12,7 +12,7 @@ const NAV_ITEMS = [
 
 export default function NavBar() {
   const pathname = usePathname();
-  const isDashboard = pathname === "/dashboard";
+  const isDashboard = pathname === "/";
 
   return (
     <div className="max-w-[1800px] mx-auto px-10 pt-7 w-full">
@@ -35,7 +35,7 @@ export default function NavBar() {
           <div className="hidden sm:block h-6 w-px bg-line" aria-hidden="true" />
 
           <Link
-            href="/dashboard"
+            href="/"
             aria-current={isDashboard ? "page" : undefined}
             className={`hidden sm:block text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-sm pb-0.5 border-b-2 ${
               isDashboard
