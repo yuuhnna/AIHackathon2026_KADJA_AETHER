@@ -426,6 +426,8 @@ export default function MethodologyPage() {
         </div>
       </div>
 
+        </div>
+      </div>
     </div>
   );
 }
