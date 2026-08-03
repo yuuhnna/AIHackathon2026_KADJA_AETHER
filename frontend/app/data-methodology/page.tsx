@@ -1,6 +1,6 @@
 import NavBar from "@/components/NavBar";
 
-export default function RehabilitationActivities() {
+export default function DataMethodology() {
   return (
     <div className="flex min-h-screen flex-col bg-[#0B1410]">
       <NavBar />
