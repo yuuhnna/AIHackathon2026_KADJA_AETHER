@@ -16,11 +16,11 @@ async function getJSON<T>(path: string): Promise<T> {
 }
 
 export function fetchFeatureImportance(): Promise<FeatureImportanceItem[]> {
-  return getJSON<FeatureImportanceItem[]>("/api/feature-importance");
+  return getJSON<FeatureImportanceItem[]>("/feature-importance");
 }
 
 export function fetchModelMetrics(): Promise<ModelMetrics> {
-  return getJSON<ModelMetrics>("/api/model-metrics");
+  return getJSON<ModelMetrics>("/model-metrics");
 }
 
 // Shape actually returned by /zones today. risk_class and confidence_flag
