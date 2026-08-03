@@ -5,8 +5,8 @@ import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 import { useEffect, useRef } from "react";
 import L from "leaflet";
-import "leaflet.markercluster";
-import { MapContainer, TileLayer, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import MarkerClusterGroup from "react-leaflet-cluster";
 
 import type { ZoneSummary } from "@/lib/types";
 import { RISK_COLOR } from "@/lib/colors";
@@ -48,48 +48,18 @@ function FitBounds({ zones }: { zones: ZoneSummary[] }) {
   return null;
 }
 
-// Half the detail panel's width (560px) — flying the map to a point this
-// far to the right of a zone's true coordinates puts that zone visually
-// centered within the still-visible left portion of the map, rather than
-// hidden behind or pressed up against the panel's left edge.
-const PANEL_OFFSET_PX = 300;
-
-// Zones look best inspected at least this close — clicking a marker while
-// zoomed far out (e.g. right after the initial fitBounds) now always zooms
-// in to at least this level, instead of sometimes leaving the marker tiny.
-const MIN_FOCUS_ZOOM = 10;
-
-// Matches the 300ms CSS slide-transition on the detail panel (see
-// app/page.tsx) so the map's pan and the panel's slide-in feel like one
-// coordinated motion rather than two animations racing each other.
+const PANEL_OFFSET_PX = 320;
+const MIN_FOCUS_ZOOM = 13;
 const FOCUS_FLY_DURATION = 0.3;
+const CLOSE_ZOOM_OUT_LEVELS = 2;
 
-function getPanelAdjustedCenter(map: L.Map, lat: number, lon: number): L.LatLng {
-  const latlng = L.latLng(lat, lon);
-  const targetPoint = map.project(latlng, map.getZoom()).subtract([-PANEL_OFFSET_PX, 0]);
-  return map.unproject(targetPoint, map.getZoom());
-}
-
-// Single shared "go show this zone" action — used by a direct marker
-// click, a table-row selection of an already-visible marker, and the
-// zoom-in fallback for zones without a marker instance yet. Keeping this
-// in one place guarantees the zoom-in + panel-offset centering behaves
-// identically no matter how the zone was selected.
 function focusZone(map: L.Map, lat: number, lon: number) {
   const targetZoom = Math.max(map.getZoom(), MIN_FOCUS_ZOOM);
-  // Recompute the offset center at the target zoom, not the current one —
-  // the projection math is zoom-dependent, so if we're about to zoom in,
-  // the centering offset must be calculated at the zoom we're arriving at.
   const latlng = L.latLng(lat, lon);
   const targetPoint = map.project(latlng, targetZoom).subtract([-PANEL_OFFSET_PX, 0]);
   const targetLatLng = map.unproject(targetPoint, targetZoom);
   map.flyTo(targetLatLng, targetZoom, { animate: true, duration: FOCUS_FLY_DURATION });
 }
-
-// How many zoom levels to pull back when the panel closes — enough to
-// give a bit of breathing room around the previously-focused zone
-// without jumping all the way back out to the province-wide view.
-const CLOSE_ZOOM_OUT_LEVELS = 2;
 
 function FocusSelectedZone({
   zones,
@@ -109,8 +79,6 @@ function FocusSelectedZone({
 
   useEffect(() => {
     if (!selectedZoneId) {
-      // Only zoom out on a genuine close (a zone WAS selected, now isn't)
-      // — not on initial mount, where nothing was ever focused.
       if (wasSelectedRef.current) {
         const targetZoom = Math.max(map.getZoom() - CLOSE_ZOOM_OUT_LEVELS, map.getMinZoom());
         map.flyTo(map.getCenter(), targetZoom, { animate: true, duration: FOCUS_FLY_DURATION });
@@ -135,9 +103,6 @@ function FocusSelectedZone({
     try {
       if (marker && clusterGroup && typeof clusterGroup.zoomToShowLayer === "function") {
         clusterGroup.zoomToShowLayer(marker, () => {
-          // Called after zoomToShowLayer changes the zoom to reveal the
-          // marker — focusZone recomputes centering fresh at that point
-          // rather than reusing any pre-zoom calculation.
           focusZone(map, selected.lat, selected.lon);
           marker.openPopup();
         });
@@ -214,8 +179,8 @@ function clusterIcon(cluster: {
           min-width: ${badgeSize}px; height: ${badgeSize}px; padding: 0 4px;
           display: flex; align-items: center; justify-content: center;
           border-radius: 9999px;
-          background: rgba(255, 255, 255, 0.15);
-          border: 1px solid ${color};
+          background: #ffffff;
+          border: 1.5px solid ${color};
           color: ${color};
           font-family: monospace;
           font-weight: 700;
@@ -284,98 +249,66 @@ function pinIcon(color: string, selected: boolean): L.DivIcon {
   });
 }
 
-// Builds the marker-cluster layer imperatively with Leaflet's own API
-// (rather than react-leaflet <Marker>/<MarkerClusterGroup> JSX), since
-// react-leaflet-cluster is not yet compatible with react-leaflet v5 /
-// React 19's context internals.
-function ZoneMarkersLayer({
-  zones,
-  selectedZoneId,
+function ZoneMarker({
+  z,
+  isSelected,
   onSelect,
   markersRef,
-  clusterGroupRef,
 }: {
-  zones: ZoneSummary[];
-  selectedZoneId: string | null;
-  onSelect: (zoneId: string | null) => void;
+  z: ZoneSummary;
+  isSelected: boolean;
+  onSelect: (id: string | null) => void;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   markersRef: React.MutableRefObject<Map<string, any>>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  clusterGroupRef: React.MutableRefObject<any>;
 }) {
+  const markerRef = useRef<L.Marker | null>(null);
   const map = useMap();
-  const selectedZoneIdRef = useRef(selectedZoneId);
 
   useEffect(() => {
-    selectedZoneIdRef.current = selectedZoneId;
-  }, [selectedZoneId]);
+    if (!markerRef.current) return;
+    if (isSelected) {
+      markerRef.current.openPopup();
+    } else {
+      markerRef.current.closePopup();
+    }
+  }, [isSelected]);
 
-  useEffect(() => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const clusterGroup = (L as any).markerClusterGroup({
-      iconCreateFunction: clusterIcon,
-      maxClusterRadius: 50,
-      spiderfyOnMaxZoom: false,
-      showCoverageOnHover: false,
-      disableClusteringAtZoom: 15,
-    });
-    clusterGroupRef.current = clusterGroup;
+  function handleClick() {
+    onSelect(z.zone_id);
+    focusZone(map, z.lat, z.lon);
+  }
 
-    zones.forEach((z) => {
-      const marker = L.marker([z.lat, z.lon], {
-        icon: pinIcon(RISK_COLOR[z.risk_class], z.zone_id === selectedZoneIdRef.current),
-      });
-      (marker.options as L.MarkerOptions & { zoneRisk?: string }).zoneRisk = z.risk_class;
-
-      marker.bindPopup(`
-        <div style="font-family: monospace; font-size: 12px; line-height: 1.6;">
-          <strong>${z.zone_id}</strong><br/>
-          Risk: ${z.risk_class}<br/>
-          Vulnerability: ${z.vulnerability_score.toFixed(2)}%
+  return (
+    <Marker
+      ref={(instance) => {
+        markerRef.current = instance;
+        if (instance) {
+          (instance.options as L.MarkerOptions & { zoneRisk?: string }).zoneRisk = z.risk_class;
+          markersRef.current.set(z.zone_id, instance);
+        } else {
+          markersRef.current.delete(z.zone_id);
+        }
+      }}
+      position={[z.lat, z.lon]}
+      icon={pinIcon(RISK_COLOR[z.risk_class], isSelected)}
+      eventHandlers={{
+        click: handleClick,
+        popupclose: () => {
+          if (isSelected) onSelect(null);
+        },
+      }}
+    >
+      <Popup>
+        <div style={{ fontFamily: "monospace", fontSize: 12, lineHeight: 1.6 }}>
+          <strong>{z.zone_id}</strong>
+          <br />
+          Risk: {z.risk_class}
+          <br />
+          Vulnerability: {z.vulnerability_score.toFixed(2)}%
         </div>
-      `);
-
-      marker.on("click", () => {
-        onSelect(z.zone_id);
-        focusZone(map, z.lat, z.lon);
-      });
-
-      marker.on("popupclose", () => {
-        if (selectedZoneIdRef.current === z.zone_id) onSelect(null);
-      });
-
-      clusterGroup.addLayer(marker);
-      markersRef.current.set(z.zone_id, marker);
-    });
-
-    map.addLayer(clusterGroup);
-
-    return () => {
-      map.removeLayer(clusterGroup);
-      markersRef.current.clear();
-      clusterGroupRef.current = null;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [zones, map]);
-
-  // Update marker icon (selected glow) and popup open/close state
-  // whenever selection changes, without rebuilding the whole layer.
-  useEffect(() => {
-    markersRef.current.forEach((marker, zoneId) => {
-      const z = zones.find((zz) => zz.zone_id === zoneId);
-      if (!z) return;
-      const isSelected = zoneId === selectedZoneId;
-      marker.setIcon(pinIcon(RISK_COLOR[z.risk_class], isSelected));
-      if (isSelected) {
-        marker.openPopup();
-      } else {
-        marker.closePopup();
-      }
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedZoneId, zones]);
-
-  return null;
+      </Popup>
+    </Marker>
+  );
 }
 
 export default function RealMap({
@@ -410,19 +343,33 @@ export default function RealMap({
         <AttributionStyle />
         <InvalidateSize />
         <FitBounds zones={zones} />
-        <ZoneMarkersLayer
-          zones={zones}
-          selectedZoneId={selectedZoneId}
-          onSelect={onSelect}
-          markersRef={markersRef}
-          clusterGroupRef={clusterGroupRef}
-        />
         <FocusSelectedZone
           zones={zones}
           selectedZoneId={selectedZoneId}
           markersRef={markersRef}
           clusterGroupRef={clusterGroupRef}
         />
+        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+        <MarkerClusterGroup
+          ref={(instance: any) => {
+            clusterGroupRef.current = instance;
+          }}
+          iconCreateFunction={clusterIcon}
+          maxClusterRadius={50}
+          spiderfyOnMaxZoom={false}
+          showCoverageOnHover={false}
+          disableClusteringAtZoom={15}
+        >
+          {zones.map((z) => (
+            <ZoneMarker
+              key={z.zone_id}
+              z={z}
+              isSelected={z.zone_id === selectedZoneId}
+              onSelect={onSelect}
+              markersRef={markersRef}
+            />
+          ))}
+        </MarkerClusterGroup>
       </MapContainer>
     </div>
   );
