@@ -140,30 +140,30 @@ export default function ExplainabilityPage() {
         )}
 
         {!loading && !error && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 flex-1">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5" style={{ gridAutoRows: "340px" }}>
             {/* Feature importance */}
-            <div className="bg-bg-panel border border-line rounded-2xl shadow-[0_2px_8px_-2px_rgba(22,36,30,0.08),0_1px_2px_rgba(22,36,30,0.04)] overflow-hidden">
-              <div className="flex justify-between items-center px-5 py-3.5 border-b border-line bg-bg-panel-alt">
+            <div className="bg-bg-panel border border-line rounded-2xl shadow-[0_2px_8px_-2px_rgba(22,36,30,0.08),0_1px_2px_rgba(22,36,30,0.04)] overflow-hidden flex flex-col">
+              <div className="flex justify-between items-center px-5 py-3.5 border-b border-line bg-bg-panel-alt shrink-0">
                 <h2 className="font-display text-sm font-semibold flex items-center gap-2">
                   <ChartBarIcon className="text-accent" />
                   <span className="text-ink">Global feature importance</span>
                 </h2>
                 <span className="font-mono text-[11px] text-faint">Random Forest, MDI</span>
               </div>
-              <div className="p-5">
+              <div className="px-5 py-4 flex-1 overflow-y-auto">
                 <FeatureImportance items={importance} />
               </div>
             </div>
 
             {/* How to read this */}
-            <div className="bg-bg-panel border border-line rounded-2xl shadow-[0_2px_8px_-2px_rgba(22,36,30,0.08),0_1px_2px_rgba(22,36,30,0.04)] overflow-hidden">
-              <div className="flex justify-between items-center px-5 py-3.5 border-b border-line bg-bg-panel-alt">
+            <div className="bg-bg-panel border border-line rounded-2xl shadow-[0_2px_8px_-2px_rgba(22,36,30,0.08),0_1px_2px_rgba(22,36,30,0.04)] overflow-hidden flex flex-col">
+              <div className="flex justify-between items-center px-5 py-3.5 border-b border-line bg-bg-panel-alt shrink-0">
                 <h2 className="font-display text-sm font-semibold flex items-center gap-2">
                   <InfoIcon className="text-accent" />
                   <span className="text-ink">How to read this</span>
                 </h2>
               </div>
-              <div className="p-5 text-[12.5px] text-muted leading-relaxed space-y-3.5">
+              <div className="px-5 py-4 flex-1 overflow-y-auto text-[12.5px] text-muted leading-relaxed space-y-3.5">
                 <p>
                   This chart shows what the Random Forest model relies on most across{" "}
                   <strong className="text-ink">every</strong>{" "}

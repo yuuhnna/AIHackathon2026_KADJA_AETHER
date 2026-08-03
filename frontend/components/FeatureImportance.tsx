@@ -4,7 +4,7 @@ export default function FeatureImportance({ items }: { items: FeatureImportanceI
   const maxImportance = Math.max(...items.map((i) => i.importance));
 
   return (
-    <div className="space-y-2.5">
+    <div className="flex flex-col gap-[11px]">
       {items.map((item) => (
         <div key={item.feature} className="flex items-center gap-2.5 text-xs">
           <div className="w-[190px] shrink-0 text-muted truncate">{item.label}</div>
