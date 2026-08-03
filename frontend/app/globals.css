@@ -1,26 +1,45 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  /* Light theme: near-white page background, solid white cards, green as
+     an accent/brand color (nav active state, links, icons, the logo) —
+     not a page-filling background. --color-accent is the single source
+     of truth for "brand green"; nothing else duplicates that value. */
+  --color-bg-page: #F3F8F5;
+  --color-bg-panel: #FFFFFF;
+  --color-bg-panel-alt: #EAF6F0;
+  --color-line: #D3E6DC;
+  --color-line-soft: #E5F1EB;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-ink: #16241E;
+  --color-muted: #35493F;
+  --color-faint: #62786C;
+
+  --color-risk-low: #22B573;
+  --color-risk-moderate: #C8890B;
+  --color-risk-high: #D14343;
+  --color-accent: #1FA971;
+
+  /* Darker variants used specifically for solid badges paired with white
+     text — the lighter tones above don't pass WCAG contrast against white
+     text. */
+  --color-risk-low-badge: #158552;
+  --color-risk-moderate-badge: #9C6A00;
+  --color-risk-high-badge: #B93636;
+
+  --font-display: "Space Grotesk", sans-serif;
+  --font-body: "IBM Plex Sans", sans-serif;
+  --font-mono: "IBM Plex Mono", monospace;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-bg-page);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+}
+
+::selection {
+  background: var(--color-accent);
+  color: #ffffff;
 }
