@@ -19,6 +19,8 @@ class ModelService:
         Load the trained model into memory.
         """
         self.model = joblib.load(MODEL_PATH)
+        self.feature_columns = FEATURE_COLUMNS
+        
 
     def predict(self, features: dict) -> float:
         """
