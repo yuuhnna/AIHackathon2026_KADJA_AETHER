@@ -33,6 +33,22 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+# Allows the Next.js frontend (running on a different port, hence a
+# different origin as far as the browser is concerned) to call this API.
+# Without this, the browser blocks every request with a CORS error even
+# though the server itself responds fine — Postman/curl don't hit this
+# restriction since it's enforced by browsers, not the server.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 app.include_router(health_router)
 app.include_router(prediction_router)
 app.include_router(metrics_router)
