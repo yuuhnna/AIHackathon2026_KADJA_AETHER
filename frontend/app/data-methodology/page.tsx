@@ -1,4 +1,16 @@
 import MethodologySidebar from "@/components/MethodologySidebar";
+import ValidationTable, { EXPERT_VALIDATION_ROWS } from "@/components/ValidationTable";
+import { CpuIcon, WarningIcon } from "@/components/icons";
+
+// Features with a dedicated branch in the recommendation rule engine today.
+// Kept in sync by hand; if a new rule branch is added there, add its key here too.
+const RULE_COVERED_FEATURES = new Set([
+  "mean_ndvi",
+  "mean_mvi",
+  "mean_elevation",
+  "nearest_aquaculture_distance_m",
+  "nearest_river_distance_m",
+]);
 
 export default function MethodologyPage() {
   return (
@@ -425,6 +437,59 @@ export default function MethodologyPage() {
         </div>
         </div>
       </div>
+
+        <div
+          id="recommendation-engine"
+          className="bg-bg-panel border border-line rounded-2xl shadow-[0_2px_8px_-2px_rgba(22,36,30,0.08),0_1px_2px_rgba(22,36,30,0.04)] overflow-hidden mb-5 scroll-mt-7"
+        >
+          <div className="flex justify-between items-center px-4.5 py-3.5 border-b border-line bg-bg-panel-alt">
+            <h2 className="font-display text-sm font-semibold flex items-center gap-2 text-accent">
+              <CpuIcon />
+              <span className="text-ink">Recommendation engine &amp; expert validation</span>
+            </h2>
+            <span className="font-mono text-[11px] text-faint">PENRO Guimaras (DENR)</span>
+          </div>
+          <div className="p-4.5">
+            <div className="text-[12.5px] text-muted leading-relaxed space-y-3 mb-4">
+              <p>
+                <strong className="text-ink">Model:</strong> Random Forest Regressor (scikit-learn),
+                trained on the model&apos;s input features. <strong className="text-ink">Explainability:</strong>{" "}
+                SHAP (TreeExplainer) attributes each prediction to its top contributing factors.
+              </p>
+              <p>
+                <strong className="text-ink">Recommendations:</strong> conservation actions come from a
+                fixed, rule-based engine (
+                <code className="text-[11px] bg-bg-panel-alt px-1 rounded-sm">recommend.py</code>) —
+                not the model itself — so they stay transparent and auditable rather than model-generated.
+                The full rule base below was submitted to{" "}
+                <strong className="text-ink">PENRO Guimaras (DENR)</strong> for expert review.
+              </p>
+            </div>
+
+            <div className="flex items-start gap-2 text-[12px] text-risk-moderate bg-risk-moderate/10 border border-risk-moderate/40 rounded-sm px-3 py-2.5 mb-4">
+              <WarningIcon className="mt-0.5 shrink-0" />
+              <span>
+                <strong>Coverage gap:</strong> the rule base spans all input features across{" "}
+                {EXPERT_VALIDATION_ROWS.length} scenarios (single and combined drivers), but the
+                currently deployed engine only implements rule branches for{" "}
+                {RULE_COVERED_FEATURES.size} of them — NDVI, MVI, elevation, and distance to
+                aquaculture/river. Temperature-, precipitation-, wind-, and slope-triggered
+                recommendations are part of the validated rule base but not yet wired into the live
+                API.
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-[10.5px] uppercase tracking-wider text-faint">
+                Expert validation table — click a row for field-validation detail
+              </div>
+              <span className="font-mono text-[10px] text-faint">
+                0 / {EXPERT_VALIDATION_ROWS.length} signed off
+              </span>
+            </div>
+            <ValidationTable rows={EXPERT_VALIDATION_ROWS} />
+          </div>
+        </div>
 
         </div>
       </div>

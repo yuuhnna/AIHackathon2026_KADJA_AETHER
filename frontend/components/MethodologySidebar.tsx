@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { DatabaseIcon, WarningIcon, GridIcon } from "@/components/icons";
+import { DatabaseIcon, WarningIcon, GridIcon, CpuIcon } from "@/components/icons";
 
 type IconComponent = (props: { className?: string }) => React.ReactElement;
 
@@ -13,6 +13,7 @@ const SECTIONS: { id: string; label: string; icon: IconComponent }[] = [
   { id: "technical-documentation", label: "Technical Documentation", icon: DatabaseIcon },
   { id: "target-limitation", label: "Target Limitation", icon: WarningIcon },
   { id: "feature-justification", label: "Feature Justification", icon: GridIcon },
+  { id: "recommendation-engine", label: "Recommendation Engine", icon: CpuIcon },
 ];
 
 export default function MethodologySidebar() {
