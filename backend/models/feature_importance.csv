@@ -1,0 +1,10 @@
+Feature,Importance
+mean_mvi,0.2010064167724918
+mean_ndvi,0.18991668443361387
+mean_elevation,0.14255354823093838
+nearest_aquaculture_distance_m,0.11698154299826716
+nearest_river_distance_m,0.11681122415014852
+mean_slope,0.11499782638860494
+mean_wind_speed,0.0444988554182206
+mean_temperature,0.04273774992043808
+annual_precipitation,0.03049615168727661
