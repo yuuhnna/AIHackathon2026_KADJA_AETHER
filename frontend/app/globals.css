@@ -3,6 +3,15 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+
+  --ink: #E8EDE9;
+  --muted: #8FA396;
+  --faint: #5A6B62;
+  --accent: #5CFF9D;
+  --bg-panel: #12201A;
+  --line: #1E2B24;
+  --risk-high: #FF6B6B;
+  --risk-low: #5CFF9D;
 }
 
 @theme inline {
@@ -10,6 +19,16 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-accent: var(--accent);
+  --color-bg-panel: var(--bg-panel);
+  --color-line: var(--line);
+  --color-risk-high: var(--risk-high);
+  --color-risk-low: var(--risk-low);
+  --font-display: var(--font-mono);
 }
 
 @media (prefers-color-scheme: dark) {
