@@ -36,6 +36,8 @@ export interface ZoneSummary {
   rehabilitation_status: string;
   top_factors: ZoneFactor[];
   raw_features?: ZoneRawFeatures;
+  /** Recommended conservation actions for this zone, ranked by priority. */
+  recommendations: string[];
 }
 
 // Rehabilitation activity log — one entry per conservation action a field
