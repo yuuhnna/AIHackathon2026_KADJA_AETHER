@@ -14,6 +14,7 @@ Endpoints:
 """
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from app.config import API_TITLE, API_VERSION
 from app.routes.health import router as health_router   
 from app.lifespan import lifespan
@@ -22,6 +23,7 @@ from app.routes.prediction import (router as prediction_router)
 from app.routes.zones import (
     router as zones_router
 )
+from app.routes.feature_importance import router as feature_importance_router
 
 
 app = FastAPI(
