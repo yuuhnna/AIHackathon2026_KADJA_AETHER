@@ -22,7 +22,7 @@ export default function Home() {
   const [filteredZones, setFilteredZones] = useState<ZoneSummary[]>(MOCK_ZONES);
 
   return (
-    <main className="flex flex-1 flex-col px-6 py-6 gap-6">
+    <main className="flex flex-1 flex-col px-6 pt-2 pb-6 gap-6">
       <KpiRow summary={placeholderSummary} />
 
       <div className="bg-bg-panel border border-line rounded-2xl overflow-hidden">

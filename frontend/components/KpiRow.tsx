@@ -38,7 +38,7 @@ export default function KpiRow({ summary }: { summary: SummaryStats }) {
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-3 pl-1.5">
       {kpis.map((kpi) => (
         <div key={kpi.label} className="relative">
           <span
