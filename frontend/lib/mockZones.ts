@@ -18,6 +18,10 @@ export const MOCK_ZONES: ZoneSummary[] = [
     expected_area_loss: 2.6,
     rehabilitation_status: "Completed",
     top_factors: [{ label: "NDVI decline", value: 0.42 }, { label: "High temp", value: 0.31 }],
+    recommendations: [
+      "Deploy mangrove seedlings along the eroding shoreline segment.",
+      "Continue post-rehabilitation NDVI monitoring on a quarterly basis.",
+    ],
   },
   {
     zone_id: "ANILAO-0001",
@@ -30,6 +34,10 @@ export const MOCK_ZONES: ZoneSummary[] = [
     expected_area_loss: 1.3,
     rehabilitation_status: "Active",
     top_factors: [{ label: "Aquaculture proximity", value: 0.38 }],
+    recommendations: [
+      "Establish a buffer zone between aquaculture ponds and mangrove edge.",
+      "Monitor water salinity levels monthly.",
+    ],
   },
   {
     zone_id: "ESTANCIA-0003",
@@ -42,6 +50,11 @@ export const MOCK_ZONES: ZoneSummary[] = [
     expected_area_loss: 2.1,
     rehabilitation_status: "Active",
     top_factors: [{ label: "NDVI decline", value: 0.39 }, { label: "Aquaculture proximity", value: 0.27 }],
+    recommendations: [
+      "Prioritize replanting in the segment with steepest NDVI decline.",
+      "Coordinate with nearby aquaculture operators to reduce runoff.",
+      "Validate satellite readings with a field survey given low confidence flag.",
+    ],
   },
   {
     zone_id: "ZARRAGA-0001",
@@ -54,6 +67,10 @@ export const MOCK_ZONES: ZoneSummary[] = [
     expected_area_loss: 1.1,
     rehabilitation_status: "Planned",
     top_factors: [{ label: "River proximity", value: 0.29 }],
+    recommendations: [
+      "Assess upstream sediment load contributing to riverbank erosion.",
+      "Schedule planting activities ahead of the next dry season.",
+    ],
   },
   {
     zone_id: "CARLES-0001",
@@ -66,6 +83,10 @@ export const MOCK_ZONES: ZoneSummary[] = [
     expected_area_loss: 1.4,
     rehabilitation_status: "Planned",
     top_factors: [{ label: "Wind speed", value: 0.33 }],
+    recommendations: [
+      "Consider windbreak planting along the exposed shoreline.",
+      "Reassess after the next monsoon season.",
+    ],
   },
   {
     zone_id: "CARLES-0002",
@@ -78,6 +99,7 @@ export const MOCK_ZONES: ZoneSummary[] = [
     expected_area_loss: 0.4,
     rehabilitation_status: "Completed",
     top_factors: [{ label: "Slope", value: 0.20 }],
+    recommendations: ["Continue routine quarterly monitoring."],
   },
   {
     zone_id: "BANATE-0003",
@@ -90,6 +112,10 @@ export const MOCK_ZONES: ZoneSummary[] = [
     expected_area_loss: 2.3,
     rehabilitation_status: "Under Review",
     top_factors: [{ label: "Aquaculture proximity", value: 0.41 }, { label: "High temp", value: 0.26 }],
+    recommendations: [
+      "Review current rehabilitation plan for adequacy given high vulnerability.",
+      "Engage aquaculture operators on runoff mitigation measures.",
+    ],
   },
   {
     zone_id: "ILOILOCITY-0003",
@@ -102,6 +128,10 @@ export const MOCK_ZONES: ZoneSummary[] = [
     expected_area_loss: 1.0,
     rehabilitation_status: "Under Review",
     top_factors: [{ label: "Road proximity", value: 0.24 }],
+    recommendations: [
+      "Validate satellite readings with a field survey given low confidence flag.",
+      "Assess road runoff impact on adjacent mangrove edge.",
+    ],
   },
   // Monitored zones with no rehabilitation history yet — present on the map
   // and in KPI totals, but absent from the Rehabilitation Activities
@@ -117,6 +147,7 @@ export const MOCK_ZONES: ZoneSummary[] = [
     expected_area_loss: 0.2,
     rehabilitation_status: "None",
     top_factors: [{ label: "Slope", value: 0.15 }],
+    recommendations: ["No action needed — maintain current monitoring schedule."],
   },
   {
     zone_id: "DUMANGAS-0001",
@@ -129,5 +160,8 @@ export const MOCK_ZONES: ZoneSummary[] = [
     expected_area_loss: 0.9,
     rehabilitation_status: "None",
     top_factors: [{ label: "River proximity", value: 0.22 }],
+    recommendations: [
+      "Consider a scoping visit given river-proximity risk with no prior activity.",
+    ],
   },
 ];

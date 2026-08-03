@@ -10,7 +10,7 @@ import { MapContainer, TileLayer, useMap } from "react-leaflet";
 
 import type { ZoneSummary } from "@/lib/types";
 import { RISK_COLOR } from "@/lib/colors";
-import { ILOILO_MAP_BOUNDS } from "@/lib/iloilo";
+import { ILOILO_MAP_BOUNDS, ILOILO_MAP_CENTER, ILOILO_MAP_DEFAULT_ZOOM } from "@/lib/iloilo";
 
 export interface RealMapProps {
   zones: ZoneSummary[];
@@ -48,6 +48,49 @@ function FitBounds({ zones }: { zones: ZoneSummary[] }) {
   return null;
 }
 
+// Half the detail panel's width (560px) — flying the map to a point this
+// far to the right of a zone's true coordinates puts that zone visually
+// centered within the still-visible left portion of the map, rather than
+// hidden behind or pressed up against the panel's left edge.
+const PANEL_OFFSET_PX = 300;
+
+// Zones look best inspected at least this close — clicking a marker while
+// zoomed far out (e.g. right after the initial fitBounds) now always zooms
+// in to at least this level, instead of sometimes leaving the marker tiny.
+const MIN_FOCUS_ZOOM = 10;
+
+// Matches the 300ms CSS slide-transition on the detail panel (see
+// app/page.tsx) so the map's pan and the panel's slide-in feel like one
+// coordinated motion rather than two animations racing each other.
+const FOCUS_FLY_DURATION = 0.3;
+
+function getPanelAdjustedCenter(map: L.Map, lat: number, lon: number): L.LatLng {
+  const latlng = L.latLng(lat, lon);
+  const targetPoint = map.project(latlng, map.getZoom()).subtract([-PANEL_OFFSET_PX, 0]);
+  return map.unproject(targetPoint, map.getZoom());
+}
+
+// Single shared "go show this zone" action — used by a direct marker
+// click, a table-row selection of an already-visible marker, and the
+// zoom-in fallback for zones without a marker instance yet. Keeping this
+// in one place guarantees the zoom-in + panel-offset centering behaves
+// identically no matter how the zone was selected.
+function focusZone(map: L.Map, lat: number, lon: number) {
+  const targetZoom = Math.max(map.getZoom(), MIN_FOCUS_ZOOM);
+  // Recompute the offset center at the target zoom, not the current one —
+  // the projection math is zoom-dependent, so if we're about to zoom in,
+  // the centering offset must be calculated at the zoom we're arriving at.
+  const latlng = L.latLng(lat, lon);
+  const targetPoint = map.project(latlng, targetZoom).subtract([-PANEL_OFFSET_PX, 0]);
+  const targetLatLng = map.unproject(targetPoint, targetZoom);
+  map.flyTo(targetLatLng, targetZoom, { animate: true, duration: FOCUS_FLY_DURATION });
+}
+
+// How many zoom levels to pull back when the panel closes — enough to
+// give a bit of breathing room around the previously-focused zone
+// without jumping all the way back out to the province-wide view.
+const CLOSE_ZOOM_OUT_LEVELS = 2;
+
 function FocusSelectedZone({
   zones,
   selectedZoneId,
@@ -62,17 +105,29 @@ function FocusSelectedZone({
   clusterGroupRef: React.MutableRefObject<any>;
 }) {
   const map = useMap();
+  const wasSelectedRef = useRef(false);
 
   useEffect(() => {
-    if (!selectedZoneId) return;
+    if (!selectedZoneId) {
+      // Only zoom out on a genuine close (a zone WAS selected, now isn't)
+      // — not on initial mount, where nothing was ever focused.
+      if (wasSelectedRef.current) {
+        const targetZoom = Math.max(map.getZoom() - CLOSE_ZOOM_OUT_LEVELS, map.getMinZoom());
+        map.flyTo(map.getCenter(), targetZoom, { animate: true, duration: FOCUS_FLY_DURATION });
+      }
+      wasSelectedRef.current = false;
+      return;
+    }
+    wasSelectedRef.current = true;
+
     const selected = zones.find((z) => z.zone_id === selectedZoneId);
     if (!selected) return;
 
     const marker = markersRef.current.get(selectedZoneId);
     const clusterGroup = clusterGroupRef.current;
-    const latlng = L.latLng(selected.lat, selected.lon);
 
     if (marker && map.hasLayer(marker)) {
+      focusZone(map, selected.lat, selected.lon);
       marker.openPopup();
       return;
     }
@@ -80,15 +135,19 @@ function FocusSelectedZone({
     try {
       if (marker && clusterGroup && typeof clusterGroup.zoomToShowLayer === "function") {
         clusterGroup.zoomToShowLayer(marker, () => {
+          // Called after zoomToShowLayer changes the zoom to reveal the
+          // marker — focusZone recomputes centering fresh at that point
+          // rather than reusing any pre-zoom calculation.
+          focusZone(map, selected.lat, selected.lon);
           marker.openPopup();
         });
         return;
       }
     } catch {
-      // fall through to plain flyTo below
+      // fall through to plain focus below
     }
 
-    map.flyTo(latlng, 14, { duration: 0.8 });
+    focusZone(map, selected.lat, selected.lon);
   }, [selectedZoneId, zones, map, markersRef, clusterGroupRef]);
 
   return null;
@@ -278,11 +337,7 @@ function ZoneMarkersLayer({
 
       marker.on("click", () => {
         onSelect(z.zone_id);
-        const panelOffsetPx = 280;
-        const latlng = L.latLng(z.lat, z.lon);
-        const targetPoint = map.project(latlng, map.getZoom()).subtract([-panelOffsetPx, 0]);
-        const targetLatLng = map.unproject(targetPoint, map.getZoom());
-        map.flyTo(targetLatLng, map.getZoom(), { animate: true, duration: 0.75, easeLinearity: 0.2 });
+        focusZone(map, z.lat, z.lon);
       });
 
       marker.on("popupclose", () => {
@@ -336,13 +391,11 @@ export default function RealMap({
 
   if (zones.length === 0) return null;
 
-  const center: [number, number] = [zones[0].lat, zones[0].lon];
-
   return (
     <div className="rounded-xl overflow-hidden border border-line w-full h-full min-h-[380px]" style={{ height }}>
       <MapContainer
-        center={center}
-        zoom={9}
+        center={ILOILO_MAP_CENTER}
+        zoom={ILOILO_MAP_DEFAULT_ZOOM}
         minZoom={8}
         maxBounds={ILOILO_MAP_BOUNDS}
         maxBoundsViscosity={1.0}
