@@ -10,17 +10,6 @@ import {
   useActivities,
 } from "@/lib/activityStore";
 
-const ILOILO_LGUS = [
-  "Ajuy", "Alimodian", "Anilao", "Badiangan", "Balasan", "Banate",
-  "Barotac Nuevo", "Barotac Viejo", "Batad", "Bingawan", "Cabatuan",
-  "Calinog", "Carles", "Concepcion", "Dingle", "Dueñas", "Dumangas",
-  "Estancia", "Guimbal", "Igbaras", "Janiuay", "Lambunao", "Leganes",
-  "Lemery", "Leon", "Maasin", "Miagao", "Mina", "New Lucena",
-  "Oton", "Pavia", "Pototan", "San Dionisio", "San Enrique",
-  "San Joaquin", "San Miguel", "San Rafael", "Santa Barbara",
-  "Sara", "Tigbauan", "Tubungan", "Zarraga", "Iloilo City", "Passi City",
-];
-
 function CheckIcon() {
   return (
     <svg width="11" height="11" viewBox="0 0 20 20" fill="none" aria-hidden="true">
@@ -158,9 +147,11 @@ export default function ZoneTable({
       if (search && !z.zone_id.toLowerCase().includes(search.toLowerCase())) return false;
       return true;
     });
-    // Default sort: highest predicted vulnerability first — most
-    // at-risk zones surface at the top without needing manual sorting.
-    result = [...result].sort((a, b) => b.vulnerability_score - a.vulnerability_score);
+    // Default sort: highest predicted area loss first — most at-risk
+    // zones surface at the top without needing manual sorting. Uses
+    // expected_area_loss to stay consistent with the figure shown in the
+    // zone-detail panel and map popup.
+    result = [...result].sort((a, b) => b.expected_area_loss - a.expected_area_loss);
     return result;
   }, [safeZones, riskFilter, municipalityFilter, statusFilter, search, effectiveStatus]);
 
@@ -191,12 +182,10 @@ export default function ZoneTable({
       municipality: z.municipality ?? "",
       lat: z.lat,
       lon: z.lon,
-      vulnerability_score: z.vulnerability_score,
-      area_loss_pct: z.vulnerability_score.toFixed(2),
+      area_loss_pct: z.expected_area_loss.toFixed(2),
       risk_class: z.risk_class,
       confidence_flag: z.confidence_flag,
       rehabilitation_status: effectiveStatus.get(z.zone_id) ?? "None",
-      
     }));
 
     const parts = ["aether-zones"];
@@ -411,75 +400,87 @@ export default function ZoneTable({
             </tr>
           </thead>
           <tbody>
-            {filtered.map((z) => (
-              <tr
-                key={z.zone_id}
-                tabIndex={0}
-                role="button"
-                aria-pressed={z.zone_id === selectedZoneId}
-                aria-label={`View details for zone ${z.zone_id}`}
-                onClick={() => onSelect(z.zone_id)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    onSelect(z.zone_id);
-                  }
-                }}
-                className={`cursor-pointer hover:bg-bg-panel-alt transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent ${
-                  z.zone_id === selectedZoneId ? "bg-bg-panel-alt shadow-[inset_2px_0_0_theme(colors.accent)]" : ""
-                }`}
-              >
-                <td className="font-mono px-3 py-2.5 border-b border-line-soft truncate" title={z.zone_id}>
-                  {z.zone_id}
-                </td>
-                <td className="px-3 py-2.5 border-b border-line-soft text-ink truncate" title={z.municipality}>
-                  {z.municipality ?? "—"}
-                </td>
-                <td className="font-mono px-3 py-2.5 border-b border-line-soft text-center">
-                  {z.vulnerability_score.toFixed(2)}%
-                </td>
-                <td className="px-2 py-2.5 border-b border-line-soft">
-                  <div className="flex justify-center">
-                    <span
-                      className={`inline-block px-2 py-0.5 rounded-sm font-mono text-[10.5px] ${RISK_PILL_CLASS[z.risk_class]}`}
-                    >
-                      {z.risk_class.toUpperCase()}
-                    </span>
-                  </div>
-                </td>
-                <td
-                  className="font-mono px-3 py-2.5 border-b border-line-soft text-muted truncate"
-                  title={z.top_factors[0]?.label ?? "—"}
+            {filtered.map((z, i) => {
+              const isSelected = z.zone_id === selectedZoneId;
+              return (
+                <tr
+                  key={z.zone_id}
+                  tabIndex={0}
+                  role="button"
+                  aria-pressed={isSelected}
+                  aria-label={`View details for zone ${z.zone_id}`}
+                  onClick={() => onSelect(z.zone_id)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      onSelect(z.zone_id);
+                    }
+                  }}
+                  className={`cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent ${
+                    isSelected
+                      ? "bg-accent/10 shadow-[inset_2px_0_0_theme(colors.accent)]"
+                      : i % 2 === 1
+                      ? "bg-bg-panel-alt/25 hover:bg-bg-panel-alt"
+                      : "hover:bg-bg-panel-alt"
+                  }`}
                 >
-                  {z.top_factors[0]?.label ?? "—"}
-                </td>
-                <td className="px-2 py-2.5 border-b border-line-soft">
-                  <div className="flex justify-center">
-                    {z.confidence_flag === "ok" ? (
-                      <span className="inline-flex items-center gap-1 font-mono text-[11px] text-risk-low">
-                        <CheckIcon /> ok
+                  <td
+                    className={`font-mono px-3 py-2.5 border-b border-line-soft truncate ${
+                      isSelected ? "font-semibold text-ink" : ""
+                    }`}
+                    title={z.zone_id}
+                  >
+                    {z.zone_id}
+                  </td>
+                  <td className="px-3 py-2.5 border-b border-line-soft text-ink truncate" title={z.municipality}>
+                    {z.municipality ?? "—"}
+                  </td>
+                  <td className="font-mono px-3 py-2.5 border-b border-line-soft text-center">
+                    {z.expected_area_loss.toFixed(2)}%
+                  </td>
+                  <td className="px-2 py-2.5 border-b border-line-soft">
+                    <div className="flex justify-center">
+                      <span
+                        className={`inline-block px-2 py-0.5 rounded-sm font-mono text-[10.5px] ${RISK_PILL_CLASS[z.risk_class]}`}
+                      >
+                        {z.risk_class.toUpperCase()}
                       </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 font-mono text-[11px] text-risk-moderate">
-                        <AlertIcon /> low
+                    </div>
+                  </td>
+                  <td
+                    className="font-mono px-3 py-2.5 border-b border-line-soft text-muted truncate"
+                    title={z.top_factors[0]?.label ?? "—"}
+                  >
+                    {z.top_factors[0]?.label ?? "—"}
+                  </td>
+                  <td className="px-2 py-2.5 border-b border-line-soft">
+                    <div className="flex justify-center">
+                      {z.confidence_flag === "ok" ? (
+                        <span className="inline-flex items-center gap-1 font-mono text-[11px] text-risk-low">
+                          <CheckIcon /> Ok
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 font-mono text-[11px] text-risk-moderate">
+                          <AlertIcon /> Low
+                        </span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-2 py-2.5 border-b border-line-soft">
+                    <div className="flex justify-center">
+                      <span
+                        className={`inline-block px-2 py-0.5 rounded-sm font-mono text-[10px] whitespace-nowrap ${
+                          REHAB_STATUS_PILL_CLASS[effectiveStatus.get(z.zone_id) ?? "None"] ??
+                          REHAB_STATUS_PILL_CLASS.None
+                        }`}
+                      >
+                        {effectiveStatus.get(z.zone_id) ?? "None"}
                       </span>
-                    )}
-                  </div>
-                </td>
-                <td className="px-2 py-2.5 border-b border-line-soft">
-                  <div className="flex justify-center">
-                    <span
-                      className={`inline-block px-2 py-0.5 rounded-sm font-mono text-[10px] whitespace-nowrap ${
-                        REHAB_STATUS_PILL_CLASS[effectiveStatus.get(z.zone_id) ?? "None"] ??
-                        REHAB_STATUS_PILL_CLASS.None
-                      }`}
-                    >
-                      {effectiveStatus.get(z.zone_id) ?? "None"}
-                    </span>
-                  </div>
-                </td>
-              </tr>
-            ))}
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
 
             {filtered.length === 0 && (
               <tr>

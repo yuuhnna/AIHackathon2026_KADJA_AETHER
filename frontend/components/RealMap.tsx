@@ -5,7 +5,7 @@ import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 import { useEffect, useRef } from "react";
 import L from "leaflet";
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, useMap } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-cluster";
 
 import type { ZoneSummary } from "@/lib/types";
@@ -96,7 +96,6 @@ function FocusSelectedZone({
 
     if (marker && map.hasLayer(marker)) {
       focusZone(map, selected.lat, selected.lon);
-      marker.openPopup();
       return;
     }
 
@@ -104,7 +103,6 @@ function FocusSelectedZone({
       if (marker && clusterGroup && typeof clusterGroup.zoomToShowLayer === "function") {
         clusterGroup.zoomToShowLayer(marker, () => {
           focusZone(map, selected.lat, selected.lon);
-          marker.openPopup();
         });
         return;
       }
@@ -224,8 +222,8 @@ function pinIcon(color: string, selected: boolean): L.DivIcon {
   const r = 6;
   const size = r * 2 + 6;
   const glowSize = size * 1.25;
-  const stroke = selected ? "#1FA971" : "#16241E";
-  const strokeWidth = selected ? 2.5 : 1;
+  const stroke = selected ? "#ffffff" : "#16241E";
+  const strokeWidth = selected ? 3 : 1;
   const opacity = selected ? 1 : 0.85;
 
   const svg = `
@@ -261,19 +259,13 @@ function ZoneMarker({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   markersRef: React.MutableRefObject<Map<string, any>>;
 }) {
-  const markerRef = useRef<L.Marker | null>(null);
   const map = useMap();
 
-  useEffect(() => {
-    if (!markerRef.current) return;
-    if (isSelected) {
-      markerRef.current.openPopup();
-    } else {
-      markerRef.current.closePopup();
-    }
-  }, [isSelected]);
-
   function handleClick() {
+    if (isSelected) {
+      onSelect(null);
+      return;
+    }
     onSelect(z.zone_id);
     focusZone(map, z.lat, z.lon);
   }
@@ -281,7 +273,6 @@ function ZoneMarker({
   return (
     <Marker
       ref={(instance) => {
-        markerRef.current = instance;
         if (instance) {
           (instance.options as L.MarkerOptions & { zoneRisk?: string }).zoneRisk = z.risk_class;
           markersRef.current.set(z.zone_id, instance);
@@ -291,23 +282,8 @@ function ZoneMarker({
       }}
       position={[z.lat, z.lon]}
       icon={pinIcon(RISK_COLOR[z.risk_class], isSelected)}
-      eventHandlers={{
-        click: handleClick,
-        popupclose: () => {
-          if (isSelected) onSelect(null);
-        },
-      }}
-    >
-      <Popup>
-        <div style={{ fontFamily: "monospace", fontSize: 12, lineHeight: 1.6 }}>
-          <strong>{z.zone_id}</strong>
-          <br />
-          Risk: {z.risk_class}
-          <br />
-          Vulnerability: {z.vulnerability_score.toFixed(2)}%
-        </div>
-      </Popup>
-    </Marker>
+      eventHandlers={{ click: handleClick }}
+    />
   );
 }
 
