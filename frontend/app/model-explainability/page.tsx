@@ -103,15 +103,80 @@ export default function ExplainabilityPage() {
     <main className="flex flex-1 flex-col px-10 pb-14 pt-0">
       <div className="w-full max-w-[1800px] mx-auto flex flex-col flex-1">
 
-        <header className="pb-5 mb-6 border-b border-line">
+        <header className="pb-6 mb-6 border-b border-line">
           <h1 className="font-display text-xl font-bold text-ink flex items-center gap-2.5">
             <ChartBarIcon className="text-accent" />
             AI Model Explainability
           </h1>
+
           <p className="text-[12.5px] text-muted mt-1.5">
-            How the model weighs each factor, and how well its predictions hold up against known outcomes.
+            How the model weighs each factor and how well its predictions hold up
+            against known outcomes.
           </p>
+
+          <div className="mt-5 flex flex-wrap items-stretch gap-y-4">
+
+            <div className="px-5 first:pl-0 border-r border-line">
+              <div className="text-[10px] uppercase tracking-[0.16em] text-faint font-medium">
+                Dataset
+              </div>
+              <div className="mt-1 text-[15px] font-semibold text-ink">
+                2018–2022
+              </div>
+              <div className="text-[11px] text-muted">
+                CGMD
+              </div>
+            </div>
+
+            <div className="px-5 border-r border-line">
+              <div className="text-[10px] uppercase tracking-[0.16em] text-faint font-medium">
+                Observations
+              </div>
+              <div className="mt-1 text-[15px] font-semibold text-ink">
+                2559
+              </div>
+              <div className="text-[11px] text-muted">
+                Training Data
+              </div>
+            </div>
+
+            <div className="px-5 border-r border-line">
+              <div className="text-[10px] uppercase tracking-[0.16em] text-faint font-medium">
+                Model
+              </div>
+              <div className="mt-1 text-[15px] font-semibold text-ink">
+                Random Forest
+              </div>
+              <div className="text-[11px] text-muted">
+                Regression
+              </div>
+            </div>
+
+            <div className="px-5 border-r border-line">
+              <div className="text-[10px] uppercase tracking-[0.16em] text-faint font-medium">
+                Features
+              </div>
+              <div className="mt-1 text-[15px] font-semibold text-ink">
+                9 Variables
+              </div>
+            </div>
+
+            <div className="px-5">
+              <div className="text-[10px] uppercase tracking-[0.16em] text-faint font-medium">
+                Prediction Target
+              </div>
+              <div className="mt-1 text-[15px] font-semibold text-ink">
+                Area Loss %
+              </div>
+              <div className="text-[11px] text-muted">
+                Next-Year
+              </div>
+            </div>
+
+          </div>
         </header>
+
+        
 
         <ModelMetricsRow metrics={metrics ?? PLACEHOLDER_METRICS} />
 
