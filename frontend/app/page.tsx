@@ -3,9 +3,10 @@
 import { useState } from "react";
 import dynamic from "next/dynamic";
 import KpiRow from "@/components/KpiRow";
+import ZoneTable from "@/components/ZoneTable";
 import { MapPinIcon } from "@/components/icons";
 import { MOCK_ZONES } from "@/lib/mockZones";
-import type { SummaryStats } from "@/lib/types";
+import type { SummaryStats, ZoneSummary } from "@/lib/types";
 
 const RealMap = dynamic(() => import("@/components/RealMap"), { ssr: false });
 
@@ -18,10 +19,12 @@ const placeholderSummary: SummaryStats = {
 
 export default function Home() {
   const [selectedZoneId, setSelectedZoneId] = useState<string | null>(null);
+  const [filteredZones, setFilteredZones] = useState<ZoneSummary[]>(MOCK_ZONES);
 
   return (
-    <main className="flex flex-1 flex-col px-6 py-6">
+    <main className="flex flex-1 flex-col px-6 py-6 gap-6">
       <KpiRow summary={placeholderSummary} />
+
       <div className="bg-bg-panel border border-line rounded-2xl overflow-hidden">
         <div className="flex justify-between items-center px-4.5 py-3.5 border-b border-line bg-bg-panel-alt">
           <h2 className="font-display text-sm font-semibold flex items-center gap-2 text-accent">
@@ -33,7 +36,7 @@ export default function Home() {
         <div className="p-2">
           <div style={{ height: 480 }}>
             <RealMap
-              zones={MOCK_ZONES}
+              zones={filteredZones}
               selectedZoneId={selectedZoneId}
               onSelect={setSelectedZoneId}
             />
@@ -59,6 +62,18 @@ export default function Home() {
             </span>
           </div>
         </div>
+      </div>
+
+      <div className="bg-bg-panel border border-line rounded-2xl p-4">
+        <h2 className="font-mono text-[11px] uppercase tracking-wider text-faint font-medium mb-3">
+          Zone Summary
+        </h2>
+        <ZoneTable
+          zones={MOCK_ZONES}
+          selectedZoneId={selectedZoneId}
+          onSelect={setSelectedZoneId}
+          onFilteredZonesChange={setFilteredZones}
+        />
       </div>
     </main>
   );

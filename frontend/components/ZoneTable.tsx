@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import type { ZoneSummary, RiskClass } from "@/lib/types";
+import type { ZoneSummary } from "@/lib/types";
 import { downloadCSV } from "@/lib/csv";
 import { REHAB_STATUS_PILL_CLASS, RISK_PILL_CLASS } from "@/lib/colors";
 import {
@@ -129,7 +129,7 @@ export default function ZoneTable({
     return byZone;
   }, [safeZones, latestStatusByZone]);
 
-  const [riskFilter, setRiskFilter] = useState<RiskClass | "all">("all");
+  const [riskFilter, setRiskFilter] = useState<"all" | "High" | "Moderate" | "Low">("all");
   const [municipalityFilter, setMunicipalityFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
@@ -152,7 +152,7 @@ export default function ZoneTable({
 
   const filtered = useMemo(() => {
     let result = safeZones.filter((z) => {
-      if (riskFilter !== "all" && z.risk_class !== riskFilter) return false;
+      if (riskFilter !== "all" && z.risk_class.toLowerCase() !== riskFilter.toLowerCase()) return false;
       if (municipalityFilter !== "all" && z.municipality !== municipalityFilter) return false;
       if (statusFilter !== "all" && effectiveStatus.get(z.zone_id) !== statusFilter) return false;
       if (search && !z.zone_id.toLowerCase().includes(search.toLowerCase())) return false;
@@ -252,6 +252,7 @@ export default function ZoneTable({
                 <button
                   key={r}
                   type="button"
+                  onClick={() => setRiskFilter(r)}
                   aria-pressed={riskFilter === r}
                   className={`cursor-pointer font-mono text-[11px] border px-2.5 py-[7px] rounded-sm tracking-wide transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1 ${
                     riskFilter === r
@@ -445,6 +446,12 @@ export default function ZoneTable({
                       {z.risk_class.toUpperCase()}
                     </span>
                   </div>
+                </td>
+                <td
+                  className="font-mono px-3 py-2.5 border-b border-line-soft text-muted truncate"
+                  title={z.top_factors[0]?.label ?? "—"}
+                >
+                  {z.top_factors[0]?.label ?? "—"}
                 </td>
                 <td className="px-2 py-2.5 border-b border-line-soft">
                   <div className="flex justify-center">
