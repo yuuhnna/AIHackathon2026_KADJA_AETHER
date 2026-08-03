@@ -155,8 +155,8 @@ function clusterIcon(cluster: {
           min-width: ${badgeSize}px; height: ${badgeSize}px; padding: 0 4px;
           display: flex; align-items: center; justify-content: center;
           border-radius: 9999px;
-          background: #ffffff;
-          border: 1.5px solid ${color};
+          background: rgba(255, 255, 255, 0.15);
+          border: 1px solid ${color};
           color: ${color};
           font-family: monospace;
           font-weight: 700;

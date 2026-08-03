@@ -55,7 +55,7 @@ export default function Home() {
               High risk
             </span>
             <span className="inline-flex items-center gap-1.5">
-              <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-risk-high text-white text-[10px] font-bold">
+              <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full border border-risk-high text-risk-high text-[10px] font-bold" style={{ background: "rgba(255,255,255,0.15)" }}>
                 N
               </span>
               Badge = high-risk zones in that cluster
