@@ -10,33 +10,29 @@ export default function KpiRow({ summary }: { summary: SummaryStats }) {
     {
       label: "Total Mangrove Monitored",
       value: summary.total_zones.toLocaleString(),
-      unit: "zones",
       colorClass: "text-ink",
-      badgeBg: "bg-faint/15",
+      accentClass: "bg-faint",
       icon: <GridIcon className="text-faint" />,
     },
     {
-      label: "Total Mangrove Area",
-      value: Math.round(totalArea).toLocaleString(),
-      unit: "ha",
+      label: "Total Mangrove Area (hectares)",
+      value: `${Math.round(totalArea).toLocaleString()} ha`,
       colorClass: "text-accent",
-      badgeBg: "bg-accent/15",
+      accentClass: "bg-accent",
       icon: <MapPinIcon className="text-accent" />,
     },
     {
-      label: "Highest Predicted Area Loss",
-      value: maxLossAreaPercent.toFixed(2),
-      unit: "%",
+      label: "Highest Predicted Area Loss (%)",
+      value: `${maxLossAreaPercent.toFixed(2)}%`,
       colorClass: "text-risk-high",
-      badgeBg: "bg-risk-high/15",
+      accentClass: "bg-risk-high",
       icon: <WarningIcon className="text-risk-high" />,
     },
     {
       label: "Active Rehabilitation Initiatives",
       value: activeRehabCount.toLocaleString(),
-      unit: "active",
       colorClass: "text-risk-low",
-      badgeBg: "bg-risk-low/15",
+      accentClass: "bg-risk-low",
       icon: <LeafIcon className="text-risk-low" />,
     },
   ];
@@ -44,23 +40,21 @@ export default function KpiRow({ summary }: { summary: SummaryStats }) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
       {kpis.map((kpi) => (
-        <div
-          key={kpi.label}
-          className="group bg-bg-panel border border-line rounded-2xl p-5 transition-all duration-200 hover:border-line hover:-translate-y-0.5 hover:shadow-[0_8px_24px_-8px_rgba(22,36,30,0.18)]"
-        >
-          <div className="flex items-center justify-between mb-4">
-            <div className="text-[10.5px] uppercase tracking-widest text-muted font-medium leading-tight max-w-[70%]">
-              {kpi.label}
-            </div>
-            <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${kpi.badgeBg}`}>
+        <div key={kpi.label} className="relative">
+          <span
+            className={`absolute -left-1.5 inset-y-0 right-0 rounded-2xl -z-10 ${kpi.accentClass}`}
+            aria-hidden="true"
+          />
+          <div className="bg-bg-panel border border-line rounded-2xl shadow-[0_2px_8px_-2px_rgba(0,0,0,0.3),0_1px_2px_rgba(0,0,0,0.2)] p-4 pl-5">
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-[10.5px] uppercase tracking-wider text-muted font-medium">
+                {kpi.label}
+              </div>
               {kpi.icon}
             </div>
-          </div>
-          <div className="flex items-baseline gap-1.5">
-            <span className={`font-display text-[30px] xl:text-[32px] font-semibold tracking-tight ${kpi.colorClass}`}>
+            <div className={`font-display text-[26px] xl:text-[28px] font-semibold ${kpi.colorClass}`}>
               {kpi.value}
-            </span>
-            <span className="text-xs font-medium text-faint">{kpi.unit}</span>
+            </div>
           </div>
         </div>
       ))}
