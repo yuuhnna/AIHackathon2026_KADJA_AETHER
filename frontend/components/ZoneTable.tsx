@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import type { ZoneSummary, RiskClass } from "@/lib/types";
+import type { ZoneSummary } from "@/lib/types";
 import { downloadCSV } from "@/lib/csv";
 import { REHAB_STATUS_PILL_CLASS, RISK_PILL_CLASS } from "@/lib/colors";
 import {
@@ -129,7 +129,7 @@ export default function ZoneTable({
     return byZone;
   }, [safeZones, latestStatusByZone]);
 
-  const [riskFilter, setRiskFilter] = useState<RiskClass | "all">("all");
+  const [riskFilter, setRiskFilter] = useState<"all" | "High" | "Moderate" | "Low">("all");
   const [municipalityFilter, setMunicipalityFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
