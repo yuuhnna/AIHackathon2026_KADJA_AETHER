@@ -10,7 +10,7 @@ API_TITLE = "AETHER API"
 API_VERSION = "1.0.0"
 
 MODEL_PATH = ROOT_DIR / "models" / "aether_v1.joblib"
-FEATURE_IMPORTANCE_PATH = ROOT_DIR / "models" / "feature_importance2.csv"
+FEATURE_IMPORTANCE_PATH = ROOT_DIR / "models" / "feature_importance.csv"
 FEATURE_TABLE_PATH = ROOT_DIR / "data" / "raw" / "processed" / "feature_table.csv"
 METRICS_PATH = ROOT_DIR / "artifacts" / "metrics.json"
 
