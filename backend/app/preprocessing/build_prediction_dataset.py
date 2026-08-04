@@ -69,9 +69,6 @@ END_DATE = END_DATE.isoformat()
 # Global Mangrove Watch
 GMW_ASSET = "projects/mangrovedatahub2/assets/CGMD-Extent30"
 
-# Latest available GMW release year
-GMW_YEAR = 2022
-
 # Sentinel-2
 S2_CLOUD_THRESHOLD = 40
 
@@ -128,25 +125,10 @@ def get_iloilo_province():
     return province_fc.geometry()
 
 
-
-def get_latest_cgmd_year():
-
-    years = (
-        ee.FeatureCollection(GMW_ASSET)
-        .aggregate_array("year")
-        .distinct()
-        .sort()
-        .getInfo()
-    )
-
-    latest = max(years)
-
-    print(f"✓ Latest CGMD year: {latest}")
-
-    return latest
-
-
 def get_latest_gmw_year():
+    """
+    Returns the most recent year available in the GMW/CGMD asset.
+    """
 
     years = (
         ee.FeatureCollection(GMW_ASSET)
@@ -158,14 +140,14 @@ def get_latest_gmw_year():
 
     latest = max(years)
 
-    print(f"✓ Latest GMW year: {latest}")
+    print(f"✓ Latest GMW/CGMD year: {latest}")
 
     return latest
 
 
 def load_current_mangrove_polygons(province):
 
-    latest_year = get_latest_cgmd_year()
+    latest_year = get_latest_gmw_year()
 
     polygons = (
         ee.FeatureCollection(GMW_ASSET)
@@ -175,14 +157,14 @@ def load_current_mangrove_polygons(province):
 
     polygons = polygons.map(
         lambda f: f.set(
-            "zone_id",
+            "feature_id",
             ee.String("ZONE_").cat(f.id())
         )
     )
 
     print(f"✓ Loaded {polygons.size().getInfo()} mangrove polygons")
 
-    return polygons
+    return polygons, latest_year
 
 
 def compute_zone_locations(polygons):
@@ -200,13 +182,13 @@ def compute_zone_locations(polygons):
 
     located = polygons.map(add_centroid)
 
-    rows = located.select(["zone_id", "lat", "lon"]).getInfo()["features"]
+    rows = located.select(["feature_id", "lat", "lon"]).getInfo()["features"]
 
     data = []
     for row in rows:
         props = row["properties"]
         data.append({
-            "zone_id": props.get("zone_id"),
+            "feature_id": props.get("feature_id"),
             "lat": props.get("lat"),
             "lon": props.get("lon"),
         })
@@ -241,7 +223,7 @@ def compute_municipality_features(location_df):
         )
         joined.loc[unmatched_mask, "NAME_2"] = nearest["NAME_2"].values
 
-    municipality_df = joined[["zone_id", "NAME_2"]].rename(
+    municipality_df = joined[["feature_id", "NAME_2"]].rename(
         columns={"NAME_2": "municipality"}
     )
 
@@ -463,8 +445,8 @@ def sample_image_at_centroid(image, polygons, band_mapping):
         )
 
         values = values.set(
-            "zone_id",
-            feature.get("zone_id")
+            "feature_id",
+            feature.get("feature_id")
         )
 
         return ee.Feature(None, values)
@@ -480,7 +462,7 @@ def sample_image_at_centroid(image, polygons, band_mapping):
         props = row["properties"]
 
         record = {
-            "zone_id": props.get("zone_id")
+            "feature_id": props.get("feature_id")
         }
 
         for ee_band, column_name in band_mapping.items():
@@ -552,10 +534,10 @@ def compute_distance_features(polygons, province):
                      using nearest road as a placeholder guess
     """
 
-    zone_ids = polygons.aggregate_array("zone_id").getInfo()
+    feature_ids = polygons.aggregate_array("feature_id").getInfo()
 
     distance_df = pd.DataFrame({
-        "zone_id": zone_ids,
+        "feature_id": feature_ids,
         "nearest_distance_to_aquaculture_m": -1,
         "nearest_distance_to_roads_m": -1,
     })
@@ -564,15 +546,31 @@ def compute_distance_features(polygons, province):
 
     return distance_df
 
+def assign_readable_zone_ids(municipality_df):
+    df = municipality_df.copy()
+    df["seq"] = df.groupby("municipality").cumcount() + 1
+    df["zone_id"] = (
+        df["municipality"].str.upper().str.replace(" ", "_")
+        + "-" + df["seq"].astype(str).str.zfill(3)
+    )
+    id_map = dict(zip(df["feature_id"], df["zone_id"]))
+    print(f"✓ Generated readable zone IDs ({len(id_map)} zones)")
+    return id_map
+
 
 def merge_feature_tables(vegetation_df, climate_df, terrain_df, distance_df, location_df, municipality_df, geo_df):
-    feature_table = vegetation_df.merge(climate_df, on="zone_id", how="left")
-    feature_table = feature_table.merge(terrain_df, on="zone_id", how="left")
-    feature_table = feature_table.merge(distance_df, on="zone_id", how="left")
-    feature_table = feature_table.merge(location_df, on="zone_id", how="left")
-    feature_table = feature_table.merge(municipality_df, on="zone_id", how="left")
-    feature_table = feature_table.merge(geo_df, on="zone_id", how="left")
+    """
+    All per-zone tables are keyed by `feature_id` (the EE-native id).
+    `zone_id` is a human-readable label attached afterward by main(),
+    so it can't be used as the join key here.
+    """
 
+    feature_table = vegetation_df.merge(climate_df, on="feature_id", how="left")
+    feature_table = feature_table.merge(terrain_df, on="feature_id", how="left")
+    feature_table = feature_table.merge(distance_df, on="feature_id", how="left")
+    feature_table = feature_table.merge(location_df, on="feature_id", how="left")
+    feature_table = feature_table.merge(municipality_df, on="feature_id", how="left")
+    feature_table = feature_table.merge(geo_df, on="feature_id", how="left")
 
     print(
         f"✓ Feature tables merged "
@@ -595,20 +593,40 @@ def export_feature_table(feature_table):
     print(f"✓ Feature table exported to {OUTPUT_PATH}")
 
 
+def export_zone_geometries(polygons, id_map):
+    geo_fc = polygons.select(["feature_id"])
+    geojson = geo_fc.getInfo()
+
+    for feature in geojson["features"]:
+        fid = feature["properties"]["feature_id"]
+        feature["properties"]["zone_id"] = id_map.get(fid, fid)
+
+    geo_path = DATA_DIR / "mangrove_zones.geojson"
+    with open(geo_path, "w") as f:
+        json.dump(geojson, f)
+
+    print(f"✓ Zone geometries exported to {geo_path}")
+    return geo_path
+
+
 def compute_geometry_column(polygons):
     """
     Attaches each zone's full polygon boundary as a GeoJSON string in a
     ".geo" column -- the same convention Earth Engine uses when
     exporting FeatureCollections straight to CSV. Keeps geometry
     traveling with the rest of the metadata in one file.
+
+    Keyed by `feature_id`, since that's the only id that actually exists
+    as a property on the EE FeatureCollection at this point -- `zone_id`
+    is a client-side label that gets merged in later.
     """
 
-    rows = polygons.select(["zone_id"]).getInfo()["features"]
+    rows = polygons.select(["feature_id"]).getInfo()["features"]
 
     data = []
     for feature in rows:
         data.append({
-            "zone_id": feature["properties"].get("zone_id"),
+            "feature_id": feature["properties"].get("feature_id"),
             ".geo": json.dumps(feature["geometry"]),
         })
 
@@ -630,21 +648,15 @@ def main():
     initialize()
 
     province = get_iloilo_province()
-
-    polygons = load_current_mangrove_polygons(province)
+    polygons, gmw_year = load_current_mangrove_polygons(province)
 
     print("\nDataset Summary")
     print("----------------------------")
-    print(f"GMW Year : {GMW_YEAR}")
+    print(f"GMW Year : {gmw_year}")
     print(f"Patches  : {polygons.size().getInfo():,}")
-
-    print("\n✓ Foundation loaded successfully.")
-    print("Ready for feature extraction.")
 
     vegetation_df = compute_vegetation_features(polygons, province)
     print(vegetation_df.head())
-
-    era5 = build_era5_collection(province)
 
     climate_df = compute_climate_features(polygons, province)
     print(climate_df.head())
@@ -661,6 +673,11 @@ def main():
     municipality_df = compute_municipality_features(location_df)
     print(municipality_df.head())
 
+    id_map = assign_readable_zone_ids(municipality_df)
+
+    # standalone shapes for the frontend map (separate from the .geo column below)
+    export_zone_geometries(polygons, id_map)
+
     geo_df = compute_geometry_column(polygons)
     print(geo_df.head())
 
@@ -671,26 +688,23 @@ def main():
         distance_df,
         location_df,
         municipality_df,
-        geo_df
+        geo_df,
     )
 
-    print(len(feature_table))                             # should be 398
-    print(feature_table["zone_id"].duplicated().sum())     # should be 0
-    print(feature_table["municipality"].isna().sum())      # should be 0
+    feature_table["zone_id"] = feature_table["feature_id"].map(id_map)
+
+    # feature_id, zone_id first; .geo last; everything else in between
+    other_cols = [c for c in feature_table.columns if c not in ("feature_id", "zone_id", ".geo")]
+    feature_table = feature_table[["feature_id", "zone_id"] + other_cols + [".geo"]]
+
+    print(len(feature_table))                              # should be 398
+    print(feature_table["zone_id"].duplicated().sum())      # should be 0
+    print(feature_table["feature_id"].duplicated().sum())   # should be 0
+    print(feature_table["municipality"].isna().sum())       # should be 0
 
     export_feature_table(feature_table)
 
     print(feature_table.head())
-
-
-    for layer_name, _ in pyogrio.list_layers(GADM_PATH):
-        gdf = gpd.read_file(GADM_PATH, layer=layer_name)
-        name_cols = [c for c in gdf.columns if c.startswith("NAME_")]
-        for col in name_cols:
-            if "Ajuy" in gdf[col].values:
-                print(f"Found 'Ajuy' in layer={layer_name}, column={col}")
-
-
 
 
 if __name__ == "__main__":
