@@ -11,7 +11,7 @@ API_VERSION = "1.0.0"
 
 MODEL_PATH = ROOT_DIR / "models" / "aether_v1.joblib"
 FEATURE_IMPORTANCE_PATH = ROOT_DIR / "models" / "feature_importance.csv"
-FEATURE_TABLE_PATH = ROOT_DIR / "data" / "raw" / "processed" / "current_feature_table.csv"
+FEATURE_TABLE_PATH = ROOT_DIR / "data" / "raw" / "processed" / "feature_table.csv"
 METRICS_PATH = ROOT_DIR / "artifacts" / "metrics.json"
 
 # Earth Engine writes each zone's footprint into the feature table as a
