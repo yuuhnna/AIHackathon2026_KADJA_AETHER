@@ -8,7 +8,8 @@ from fastapi import APIRouter, HTTPException
 
 from app.schemas.zone import (
     ZoneSummary,
-    ZoneDetail
+    ZoneDetail,
+    ZoneGeoCollection
 )
 from app.services.zone_service import (
     get_zone_service
@@ -32,6 +33,23 @@ def get_all_zones():
     zone_service = get_zone_service()
 
     return zone_service.get_all_zones()
+
+
+# Declared before /{zone_id} on purpose — FastAPI matches routes in
+# declaration order, so the other way round "geojson" would be captured
+# as a zone_id and 404.
+@router.get(
+    "/geojson",
+    response_model=ZoneGeoCollection
+)
+def get_zones_geojson():
+    """
+    Returns all monitored zone footprints as GeoJSON, for map rendering.
+    """
+
+    zone_service = get_zone_service()
+
+    return zone_service.get_zones_geojson()
 
 
 @router.get(

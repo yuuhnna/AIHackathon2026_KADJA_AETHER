@@ -195,14 +195,19 @@ export default function Home() {
                   {item.label}
                 </span>
               ))}
+              {/* Colour on the map is the tier above; shading depth is
+                  how many zones of that tier sit together. */}
               <span className="inline-flex items-center gap-1.5 ml-auto">
                 <span
-                  className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full border border-risk-high text-risk-high text-[10px] font-bold"
-                  style={{ background: "rgba(255,255,255,0.15)" }}
-                >
-                  N
+                  className="inline-block w-[52px] h-[10px] rounded-full border border-line"
+                  style={{
+                    background:
+                      "linear-gradient(90deg, rgba(22,36,30,0.10), rgba(22,36,30,0.70))",
+                  }}
+                />
+                <span className="text-faint">
+                  shading = zone density; zoom in for actual zone footprints
                 </span>
-                <span className="text-faint">= high-risk zones in that cluster</span>
               </span>
             </div>
           </div>

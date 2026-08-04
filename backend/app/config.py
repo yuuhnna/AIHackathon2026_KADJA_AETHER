@@ -13,6 +13,13 @@ MODEL_PATH = ROOT_DIR / "models" / "aether_v1.joblib"
 FEATURE_IMPORTANCE_PATH = ROOT_DIR / "models" / "feature_importance.csv"
 FEATURE_TABLE_PATH = ROOT_DIR / "data" / "raw" / "processed" / "current_feature_table.csv"
 METRICS_PATH = ROOT_DIR / "artifacts" / "metrics.json"
+
+# Earth Engine writes each zone's footprint into the feature table as a
+# GeoJSON geometry string under this column. It is the map's only source
+# of real zone shapes, so it always stays in sync with the predictions
+# computed from the same rows.
+GEOMETRY_COLUMN = ".geo"
+
 ERROR_BY_SEVERITY_PATH  = ROOT_DIR / "artifacts" / "error_by_severity.csv"
 
 # Column names AND ORDER match exactly what aether_v1.joblib was

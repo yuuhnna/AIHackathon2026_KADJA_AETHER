@@ -4,7 +4,8 @@ import type {
   FeatureImportanceItem,
   ModelMetrics,
   ErrorByRangeItem,
-  ZoneAssessmentPayload
+  ZoneAssessmentPayload,
+  ZoneGeoCollection
 } from "./types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -67,6 +68,12 @@ function toFrontendZone(z: BackendZoneSummary): ZoneSummary {
 export async function fetchZones(): Promise<ZoneSummary[]> {
   const data = await getJSON<BackendZoneSummary[]>("/zones");
   return data.map(toFrontendZone);
+}
+
+// Real zone footprints for the map. Kept out of /zones on purpose: the
+// geometry is roughly half a megabyte, and the zone table never needs it.
+export function fetchZoneGeometries(): Promise<ZoneGeoCollection> {
+  return getJSON<ZoneGeoCollection>("/zones/geojson");
 }
 
 interface BackendSummaryResponse {
