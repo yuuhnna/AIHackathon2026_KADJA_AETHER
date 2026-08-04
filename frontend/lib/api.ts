@@ -3,7 +3,8 @@ import type {
   SummaryStats,
   FeatureImportanceItem,
   ModelMetrics,
-  ErrorByRangeItem
+  ErrorByRangeItem,
+  ZoneAssessmentPayload
 } from "./types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -144,3 +145,13 @@ export async function fetchErrorBySeverity(): Promise<ErrorByRangeItem[]> {
     errorMax: item.error_max,
   }));
 }
+
+export async function submitZoneAssessment(
+  zoneId: string,
+  recommendationIndex: number,
+  payload: ZoneAssessmentPayload & { recommendation_text?: string }
+): Promise<void> {
+  const { submitAssessmentToSupabase } = await import("./supabaseActivityStore");
+  await submitAssessmentToSupabase(zoneId, recommendationIndex, payload);
+}
+ 

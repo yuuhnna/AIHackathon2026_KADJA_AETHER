@@ -59,31 +59,6 @@ export const REHAB_STATUSES: readonly RehabStatus[] = [
   "Completed",
 ] as const;
 
-// Mirrors the rule-based engine's action categories as documented on the
-// Data & Methodology page (see ValidationTable.tsx), so a logged action is
-// filed under the same vocabulary the recommendation itself came from.
-export type ActionCategory =
-  | "Restoration"
-  | "Protection & Enforcement"
-  | "Monitoring"
-  | "Climate Adaptation"
-  | "Intervention Planning"
-  | "Integrated Management";
-
-// Bodies that carry out mangrove conservation work in Iloilo. DENR and its
-// PENRO/CENRO field offices hold national mandate; MENRO is the municipal
-// environment office; the rest are the usual implementing partners.
-export const IMPLEMENTING_UNITS = [
-  "DENR",
-  "PENRO",
-  "CENRO",
-  "MENRO",
-  "LGU",
-  "People's Organization",
-  "Academe",
-  "NGO",
-] as const;
-
 /**
  * Uniform monitored-zone area (a 300m x 300m grid cell). Also the ceiling for
  * a single entry's reported area covered — a field team cannot rehabilitate
@@ -141,4 +116,28 @@ export interface ErrorByRangeItem {
   mae: number;         // mean absolute error within this bin, hectares
   errorMin: number;    // smallest observed error in this bin
   errorMax: number;    // largest observed error in this bin
+}
+
+export interface ZoneRecommendation {
+  category: string;          // e.g. "Restoration", "Protection & Enforcement"
+  driver: string;             // e.g. "Low NDVI"
+  text: string;                // the recommendation itself
+  validationPoints: string[]; // field validation checklist for this recommendation
+  lastAssessment?: {
+    date: string;
+    status: "Planned" | "Ongoing" | "Completed";
+    unit: string;
+  } | null;
+}
+
+export interface ZoneAssessmentPayload {
+  date: string;
+  status: "Planned" | "Ongoing" | "Completed";
+  unit: string;
+  officer?: string;
+  action: string;
+  areaHa?: number;
+  evidenceRef?: string;
+  notes?: string;
+  validatedItems: string[]; // checklist items confirmed at the time of logging
 }
