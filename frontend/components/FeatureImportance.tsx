@@ -5,7 +5,7 @@ export default function FeatureImportance({ items }: { items: FeatureImportanceI
   const maxImportance = Math.max(...items.map((i) => i.importance));
 
   return (
-    <div className="flex flex-col gap-[11px]">
+    <div className="flex flex-col gap-1">
       {items.map((item, index) => {
         // Rows in the back half of the list sit near the panel's bottom
         // edge, where a tooltip opening downward has nowhere to go before
@@ -13,15 +13,18 @@ export default function FeatureImportance({ items }: { items: FeatureImportanceI
         const openUpward = index >= Math.ceil(items.length / 2);
 
         return (
-          <div key={item.feature} className="group relative flex items-center gap-2.5 text-xs">
-            <div className="w-[190px] shrink-0 text-muted truncate cursor-help">{item.label}</div>
+          <div
+            key={item.feature}
+            className="group relative flex items-center gap-2.5 text-xs py-1.5 -mx-1.5 px-1.5 rounded-sm cursor-help hover:bg-bg-panel-alt transition-colors"
+          >
+            <div className="w-[190px] shrink-0 text-muted truncate">{item.label}</div>
             <div className="flex-1 h-2 bg-ink/10 border border-line rounded-full overflow-hidden">
               <div
                 className="h-full bg-accent"
                 style={{ width: `${(item.importance / maxImportance) * 100}%` }}
               />
             </div>
-            <div className="w-11 text-right font-mono text-[11px] text-faint cursor-help">
+            <div className="w-11 text-right font-mono text-[11px] text-faint">
               {(item.importance * 100).toFixed(1)}%
             </div>
 
