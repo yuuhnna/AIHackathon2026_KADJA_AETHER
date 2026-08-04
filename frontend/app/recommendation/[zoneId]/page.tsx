@@ -230,7 +230,7 @@ function RecommendationCard({
               </select>
             </div>
             <div>
-              <label className="block text-xs uppercase tracking-wide text-faint mb-1">Officer (optional)</label>
+              <label className="block text-xs uppercase tracking-wide text-faint mb-1">Office in Charge (optional)</label>
               <input
                 type="text"
                 value={form.officer}

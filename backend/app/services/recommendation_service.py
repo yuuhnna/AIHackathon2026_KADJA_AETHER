@@ -18,7 +18,8 @@ class RecommendationService:
     def recommend(
         self,
         top_factors: list[dict],
-        features: dict
+        features: dict,
+        risk: str | None = None
     ) -> list[str]:
 
         recommendations = []
@@ -28,6 +29,17 @@ class RecommendationService:
             factor["feature"]
             for factor in top_factors
         }
+
+
+        # High predicted vulnerability warrants on-site assessment
+        # regardless of which factors are driving it.
+        if risk == "high":
+
+            recommendations.append(
+                "Prioritize for field validation and immediate "
+                "monitoring — high predicted vulnerability warrants "
+                "on-site assessment."
+            )
 
 
         # Aquaculture pressure
@@ -90,8 +102,30 @@ class RecommendationService:
             )
 
 
-        # Default
-        if not recommendations:
+        # River connectivity
+        if (
+            "nearest_river_distance_m"
+            in factor_names
+
+            and features["nearest_river_distance_m"] > 1500
+        ):
+
+            recommendations.append(
+                "Limited freshwater connectivity may be constraining "
+                "recovery; evaluate hydrological restoration options."
+            )
+
+
+        # Default — differs for a zone already confirmed low-risk versus
+        # one where the drivers are simply mixed/inconclusive.
+        if not recommendations and risk == "low":
+
+            recommendations.append(
+                "Maintain routine monitoring cadence; no elevated-risk "
+                "drivers identified in the current assessment window."
+            )
+
+        elif not recommendations:
 
             recommendations.append(
                 "Continue routine monitoring; "

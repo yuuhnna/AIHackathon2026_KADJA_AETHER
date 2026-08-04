@@ -12,9 +12,26 @@
  */
 
 import { supabase } from "./supabase";
+import type { Database } from "./database.types";
 import type { RehabActivity, RehabStatus, ZoneAssessmentPayload } from "./types";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
+
+/**
+ * Every exported function below needs a live client. Centralising the null
+ * check here means "Supabase isn't configured" surfaces as a normal
+ * rejected promise — callers (activityStore.ts) already catch that and
+ * fall back to localStorage — rather than a crash at import time.
+ */
+function requireSupabase(): SupabaseClient<Database> {
+  if (!supabase) {
+    throw new Error(
+      "Supabase isn't configured (missing NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY)."
+    );
+  }
+  return supabase;
+}
 
 function toRehabActivity(
   row: {
@@ -57,7 +74,7 @@ function toRehabActivity(
  * Throws on network/query error so callers can fall back to localStorage.
  */
 export async function fetchActivitiesFromSupabase(): Promise<RehabActivity[]> {
-  const { data, error } = await supabase
+  const { data, error } = await requireSupabase()
     .from("rehab_activities")
     .select("*")
     .order("date", { ascending: false })
@@ -73,7 +90,7 @@ export async function fetchActivitiesFromSupabase(): Promise<RehabActivity[]> {
 export async function fetchZoneActivitiesFromSupabase(
   zoneId: string
 ): Promise<RehabActivity[]> {
-  const { data, error } = await supabase
+  const { data, error } = await requireSupabase()
     .from("rehab_activities")
     .select("*")
     .eq("zone_id", zoneId)
@@ -124,7 +141,7 @@ export async function logActivityToSupabase(
     source: "logged" as const,
   };
 
-  const { data, error } = await supabase
+  const { data, error } = await requireSupabase()
     .from("rehab_activities")
     .insert(insert)
     .select()
@@ -140,7 +157,7 @@ export async function logActivityToSupabase(
  * so deleting a missing id is a harmless no-op.
  */
 export async function unlogActivityFromSupabase(id: string): Promise<void> {
-  const { error } = await supabase
+  const { error } = await requireSupabase()
     .from("rehab_activities")
     .delete()
     .eq("id", id);
@@ -173,7 +190,7 @@ export async function submitAssessmentToSupabase(
     validated_items: payload.validatedItems,
   };
 
-  const { error } = await supabase
+  const { error } = await requireSupabase()
     .from("zone_assessments")
     .insert(insert);
 
@@ -184,7 +201,7 @@ export async function submitAssessmentToSupabase(
  * Fetch all assessments for a given zone, newest first.
  */
 export async function fetchZoneAssessments(zoneId: string) {
-  const { data, error } = await supabase
+  const { data, error } = await requireSupabase()
     .from("zone_assessments")
     .select("*")
     .eq("zone_id", zoneId)

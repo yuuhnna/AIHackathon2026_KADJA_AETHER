@@ -44,6 +44,12 @@ class ZoneService:
         self.recommendation_service = (
             get_recommendation_service()
         )
+        # The feature table is loaded once and never mutated at runtime,
+        # so the bulk risk-class ranking is safe to compute once and
+        # reuse — both for get_all_zones() itself and so get_zone() can
+        # look up a single zone's risk_class without rerunning
+        # predict_batch over every monitored zone on every detail click.
+        self._zone_summaries_cache: list[ZoneSummary] | None = None
 
     def _classify_risk(self, rank_pct: float) -> str:
         """
@@ -75,6 +81,9 @@ class ZoneService:
         """
         Returns all monitored zones with predictions.
         """
+
+        if self._zone_summaries_cache is not None:
+            return self._zone_summaries_cache
 
         zones = self.data_service.get_all_zones()
 
@@ -120,8 +129,21 @@ class ZoneService:
                 )
             )
 
+        self._zone_summaries_cache = summaries
         return summaries
-    
+
+
+    def _get_risk_class(self, zone_id: str) -> str:
+        """
+        A single zone's risk_class, from the same municipality-relative
+        ranking used by get_all_zones() — so the Dashboard's zone list
+        and the zone detail panel never disagree on a zone's risk.
+        """
+        for summary in self.get_all_zones():
+            if summary.zone_id == zone_id:
+                return summary.risk_class
+        return "low"
+
 
     def get_zone(
         self,
@@ -150,13 +172,16 @@ class ZoneService:
             else:
                 raw_features[key] = float(value)
 
+        risk_class = self._get_risk_class(zone_id)
+
         prediction_result = (
             self.model_service.predict(
-                features
-            )  
+                features,
+                risk_class
+            )
         )
 
-        
+
         return ZoneDetail(
 
             zone_id=zone["zone_id"],
@@ -180,6 +205,10 @@ class ZoneService:
                 ] / 100 * ZONE_AREA_HA,
                 2
             ),
+
+            risk_class=risk_class,
+
+            confidence_flag=self._confidence_flag(zone),
 
 
             top_factors=

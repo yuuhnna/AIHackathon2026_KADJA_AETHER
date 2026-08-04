@@ -27,6 +27,7 @@ import {
   logActivityToSupabase,
   unlogActivityFromSupabase,
 } from "./supabaseActivityStore";
+import type { LogActivityInput } from "./supabaseActivityStore";
 
 export type { LogActivityInput } from "./supabaseActivityStore";
 
@@ -171,20 +172,6 @@ export function useActivities(): RehabActivity[] {
 // ---------------------------------------------------------------------------
 // Mutations
 // ---------------------------------------------------------------------------
-
-export interface LogActivityInput {
-  zone_id: string;
-  status: RehabStatus;
-  date: string;
-  action_category: string;
-  recommendation_name: string;
-  recommendation_text: string;
-  action_taken: string;
-  implementing_unit: string;
-  officer_name?: string;
-  area_covered_ha?: number;
-  evidence_ref?: string;
-}
 
 /**
  * Log one activity.

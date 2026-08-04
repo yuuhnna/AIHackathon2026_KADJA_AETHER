@@ -1,6 +1,6 @@
 import type { ZoneSummary } from "@/lib/types";
 import { RISK_LABEL } from "@/lib/colors";
-import {useRouter} from "next/navigation";
+import RecommendedActions from "@/components/RecommendedActions";
 
 function AlertIcon({ className }: { className?: string }) {
   return (
@@ -31,14 +31,6 @@ function ArrowIcon({ direction }: { direction: "increases" | "decreases" }) {
   );
 }
 
-function ChevronRightIcon({ className }: { className?: string }) {
-  return (
-    <svg width="13" height="13" viewBox="0 0 20 20" fill="none" aria-hidden="true" className={className}>
-      <path d="M7.5 4.5l6 5.5-6 5.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
     <div className="text-[10.5px] uppercase tracking-wider text-muted font-medium mb-2">
@@ -47,13 +39,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
-export default function DetailPanel({
-  zone,
-  onActionsClick,
-}: {
-  zone: ZoneSummary | null;
-  onActionsClick?: (recommendations: string[]) => void;
-}) {
+export default function DetailPanel({ zone }: { zone: ZoneSummary | null }) {
   if (!zone) {
     return (
       <div className="text-faint text-[12.5px] leading-relaxed py-3">
@@ -75,9 +61,6 @@ export default function DetailPanel({
     (a, b) => Math.abs(b.value) - Math.abs(a.value)
   );
   const maxAbsImpact = Math.max(...sortedFactors.map((f) => Math.abs(f.value)), 0.0001);
-
-
-  const router = useRouter();
 
   return (
     <div>
@@ -124,41 +107,7 @@ export default function DetailPanel({
         </div>
       </section>
 
-      <section className="mt-5 pt-4 border-t border-line">
-        <div className="flex items-center gap-2 mb-1">
-          <span className="w-2 h-2 bg-accent rounded-sm inline-block shrink-0" />
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-accent">
-            Priority actions
-          </span>
-        </div>
-        <p className="text-[10.5px] text-faint mb-2.5">
-          Recommended based on this zone's ranking and contributing factors.
-        </p>
-
-        <button
-          type="button"
-          onClick={() => router.push(`/recommendation/${zone.zone_id}`)}
-          className="group w-full text-left rounded-lg border border-line hover:border-accent/50 bg-bg-panel-alt/40 hover:bg-bg-panel-alt transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-        >
-          <ul className="list-none">
-            {zone.recommendations.map((rec, i) => (
-              <li
-                key={i}
-                className="flex items-start gap-2.5 py-2.5 px-3 border-b border-line-soft last:border-none group-hover:bg-accent/5 transition-colors"
-              >
-                <span className="mt-0.5 shrink-0 w-5 h-5 rounded-full bg-accent/15 text-accent flex items-center justify-center font-mono text-[10px] font-semibold">
-                  {i + 1}
-                </span>
-                <span className="flex-1 text-[12.5px] text-ink leading-relaxed">{rec}</span>
-              </li>
-            ))}
-          </ul>
-          <div className="flex items-center justify-end gap-1 px-3 py-2 border-t border-line-soft bg-bg-panel-alt/30 group-hover:bg-accent/5 text-[10.5px] text-faint group-hover:text-accent transition-colors rounded-b-lg">
-            View validation checklist
-            <ChevronRightIcon className="group-hover:translate-x-0.5 transition-transform" />
-          </div>
-        </button>
-      </section>
+      <RecommendedActions key={zone.zone_id} zone={zone} />
 
       {zone.confidence_flag !== "ok" && (
         <div
