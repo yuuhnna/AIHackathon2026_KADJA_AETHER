@@ -51,3 +51,26 @@ export const RISK_LABEL: Record<RiskClass, string> = {
   moderate: "Next 20%",
   low: "Remaining 70%",
 };
+
+// Same wording as the Input Features section on the Data & Methodology
+// page — kept here so it can also back the feature-importance hover
+// tooltips without duplicating the copy in two places.
+export const FEATURE_DESCRIPTIONS: Record<string, string> = {
+  mean_ndvi:
+    "General canopy greenness and vigor, derived from Sentinel-2 reflectance. Sensitive to vegetation stress before it becomes visible on the ground.",
+  mean_mvi:
+    "A mangrove-specific vegetation index — distinguishes mangrove stand condition from general greenness, which NDVI alone can't do.",
+  mean_temperature:
+    "Mean air temperature for the zone. Sustained heat stress is linked to canopy dieback.",
+  annual_precipitation:
+    "Total annual rainfall. Both prolonged deficit and abnormal excess are associated with mangrove stress.",
+  mean_wind_speed:
+    "Average wind speed. Higher exposure raises physical storm-damage risk to mangrove stands.",
+  mean_elevation:
+    "Height above sea level. Low-elevation zones face greater tidal inundation and flood exposure.",
+  mean_slope: "Steepness of terrain. Steeper slopes are more prone to erosion and sediment loss.",
+  nearest_aquaculture_distance_m:
+    "Distance to the nearest aquaculture site. Closer proximity indicates higher land-conversion pressure.",
+  nearest_river_distance_m:
+    "Distance to the nearest river. Affects freshwater and sediment connectivity important for recovery.",
+};
