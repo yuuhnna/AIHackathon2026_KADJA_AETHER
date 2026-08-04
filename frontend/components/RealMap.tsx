@@ -10,14 +10,16 @@
 // across, it is invisible at province zoom — so the map renders two
 // layers and crossfades between them by zoom level:
 //
-//   zoomed out  -> a density heat field: where priority zones cluster,
-//                  coloured by the same Top 10% / Next 20% / Remaining
-//                  70% ranking the legend and table use
-//   zoomed in   -> the true polygon footprints, filled by that ranking
+//   zoomed out  -> a density heat field: where zones cluster
+//   zoomed in   -> the true polygon footprints
+//
+// Both layers paint the mangroves green and burn only the Top 10% in
+// vivid red over them — see ZONE_FILL_COLOR for why the map's palette is
+// not the RISK_COLOR one the legend and table text use.
 //
 // The heat field is drawn on a plain canvas rather than pulling in a
-// heatmap dependency — it is one radial-gradient pass plus a colour
-// lookup, and doing it here keeps the palette locked to RISK_COLOR
+// heatmap dependency — it is one radial-gradient pass plus one
+// compositing op per colour, and doing it here keeps the palette ours
 // instead of a library's own gradient.
 
 import "leaflet/dist/leaflet.css";
@@ -26,7 +28,7 @@ import L from "leaflet";
 import { MapContainer, TileLayer, useMap } from "react-leaflet";
 
 import type { RiskClass, ZoneGeoFeature, ZoneSummary } from "@/lib/types";
-import { RISK_COLOR, RISK_LABEL } from "@/lib/colors";
+import { RISK_COLOR, RISK_LABEL, ZONE_FILL_COLOR } from "@/lib/colors";
 import { fetchZoneGeometries } from "@/lib/api";
 import { ILOILO_MAP_BOUNDS, ILOILO_MAP_CENTER, ILOILO_MAP_DEFAULT_ZOOM } from "@/lib/iloilo";
 
@@ -69,23 +71,22 @@ const MIN_FOCUS_ZOOM = 14;
 const FOCUS_FLY_DURATION = 0.4;
 const CLOSE_ZOOM_OUT_LEVELS = 2;
 
-// The heat field is accumulated one priority tier at a time, painted
-// bottom-up in this order — so a Top 10% zone always shows through a
-// crowd of lower-priority neighbours.
+// The heat field is accumulated in passes, painted in this order, so the
+// red Top 10% pass always lands on top of the green mangrove body.
 //
-// Hue is the tier, never the density. Density only drives opacity: a
-// hundred Remaining-70% zones stacked in one bay reads as solid green,
-// not as red. Summing all tiers into a single ramp would have said the
-// opposite of what the legend promises.
-const TIER_ORDER: RiskClass[] = ["low", "moderate", "high"];
-
-// Per-zone opacity contribution. A lone zone is a faint wash; a handful
-// overlapping saturates to the tier's full colour.
-const TIER_ALPHA: Record<RiskClass, number> = {
-  low: 0.2,
-  moderate: 0.3,
-  high: 0.42,
-};
+// Colour is the pass, never the density. Density only drives opacity: a
+// hundred zones stacked in one bay reads as solid green, not as red.
+// Accumulating every zone into a single green-to-red ramp would have
+// said the opposite — that a crowd of low-priority zones is an alert.
+//
+// Remaining 70% and Next 20% share one pass because they share a fill
+// colour (see ZONE_FILL_COLOR); merging them keeps density honest, since
+// a low zone overlapping a moderate one should darken the green once,
+// not twice.
+const HEAT_PASSES: { color: string; risks: RiskClass[]; alpha: number }[] = [
+  { color: ZONE_FILL_COLOR.low, risks: ["low", "moderate"], alpha: 0.22 },
+  { color: ZONE_FILL_COLOR.high, risks: ["high"], alpha: 0.5 },
+];
 
 function ramp(value: number, from: number, to: number): number {
   if (value <= from) return 0;
@@ -201,16 +202,16 @@ function HeatField({ zones, opacity }: { zones: ZoneSummary[]; opacity: number }
       }
       const blob = blobRef.current.canvas;
 
-      for (const tier of TIER_ORDER) {
+      for (const pass of HEAT_PASSES) {
         scratchCtx.setTransform(scale, 0, 0, scale, 0, 0);
         scratchCtx.globalCompositeOperation = "source-over";
         scratchCtx.clearRect(0, 0, size.x, size.y);
-        scratchCtx.globalAlpha = TIER_ALPHA[tier];
+        scratchCtx.globalAlpha = pass.alpha;
 
         let drew = false;
 
         for (const zone of zonesRef.current) {
-          if (zone.risk_class !== tier) continue;
+          if (!pass.risks.includes(zone.risk_class)) continue;
 
           const point = map.latLngToContainerPoint([zone.lat, zone.lon]);
           // Skip anything whose blob cannot reach the viewport.
@@ -229,12 +230,12 @@ function HeatField({ zones, opacity }: { zones: ZoneSummary[]; opacity: number }
 
         if (!drew) continue;
 
-        // "source-in" repaints the accumulated grey blobs in the tier's
+        // "source-in" repaints the accumulated grey blobs in the pass's
         // colour while keeping their alpha — the whole recolour happens
         // in one compositing op instead of a per-pixel pass in JS.
         scratchCtx.globalAlpha = 1;
         scratchCtx.globalCompositeOperation = "source-in";
-        scratchCtx.fillStyle = RISK_COLOR[tier];
+        scratchCtx.fillStyle = pass.color;
         scratchCtx.fillRect(0, 0, size.x, size.y);
 
         ctx.drawImage(scratch, 0, 0);
@@ -300,11 +301,13 @@ function HeatField({ zones, opacity }: { zones: ZoneSummary[]; opacity: number }
 function footprintStyle(risk: RiskClass, selected: boolean): L.PathOptions {
   return {
     pane: SHAPE_PANE,
-    color: selected ? "#FFFFFF" : RISK_COLOR[risk],
+    color: selected ? "#FFFFFF" : ZONE_FILL_COLOR[risk],
     weight: selected ? 2.5 : 1,
     opacity: selected ? 1 : 0.9,
-    fillColor: RISK_COLOR[risk],
-    fillOpacity: selected ? 0.85 : 0.6,
+    fillColor: ZONE_FILL_COLOR[risk],
+    // Top 10% sits a little more opaque than the green body so it still
+    // reads as the alert layer once you are zoomed into real shapes.
+    fillOpacity: selected ? 0.9 : risk === "high" ? 0.72 : 0.55,
     className: selected ? "aether-zone aether-zone-selected" : "aether-zone",
   };
 }
@@ -348,11 +351,16 @@ function FootprintLayer({
 
   // Only the zones currently passed in (the table's filtered set) get a
   // shape — a filtered-out zone should not be clickable on the map.
+  //
+  // Sorted so Top 10% shapes are added last: SVG paints in document
+  // order, so where a red footprint abuts a green one the red has to be
+  // the one drawn over the top, and it has to win the click too.
   const visibleFeatures = useMemo(() => {
     const zoneById = new Map(zones.map((z) => [z.zone_id, z]));
     return features
       .filter((f) => zoneById.has(f.properties.zone_id))
-      .map((f) => ({ feature: f, zone: zoneById.get(f.properties.zone_id)! }));
+      .map((f) => ({ feature: f, zone: zoneById.get(f.properties.zone_id)! }))
+      .sort((a, b) => Number(a.zone.risk_class === "high") - Number(b.zone.risk_class === "high"));
   }, [features, zones]);
 
   useEffect(() => {
@@ -436,10 +444,14 @@ function SelectionRing({
     const zone = zones.find((z) => z.zone_id === selectedZoneId);
     if (!zone) return;
 
+    // White rather than the zone's colour: now that most of the map is
+    // green, a green ring on a green field would be the one thing you
+    // cannot find. White also matches the selected footprint's stroke, so
+    // "selected" looks the same at every zoom.
     const ring = L.circleMarker([zone.lat, zone.lon], {
       pane: SELECTION_PANE,
       radius: 13,
-      color: RISK_COLOR[zone.risk_class],
+      color: "#FFFFFF",
       weight: 2,
       opacity: 0.95,
       fill: false,

@@ -6,6 +6,25 @@ export const RISK_COLOR: Record<RiskClass, string> = {
   high: "#D14343",
 };
 
+// Fill colours for the zone map only — deliberately NOT the same palette
+// as RISK_COLOR above.
+//
+// The map answers one question: where does a field team go next. So it
+// paints the mangroves as mangroves (one green for everything that is
+// not a priority) and burns only the Top 10% in vivid red on top of
+// them. Giving Next 20% its own colour there would put a third alert
+// tone on the map and blunt the one signal it exists to carry.
+//
+// Everywhere text names a tier — the legend, the table pills, the
+// detail panel, the map tooltip — RISK_COLOR still applies, so Next 20%
+// stays amber when you read it or press it. Only the painted area is
+// green.
+export const ZONE_FILL_COLOR: Record<RiskClass, string> = {
+  low: "#22B573",
+  moderate: "#22B573",
+  high: "#FF2D1A",
+};
+
 // Solid risk pills (white text on a saturated risk color) — shared by
 // ZoneTable (Dashboard) and the Rehabilitation Activities pages.
 export const RISK_PILL_CLASS: Record<RiskClass, string> = {
