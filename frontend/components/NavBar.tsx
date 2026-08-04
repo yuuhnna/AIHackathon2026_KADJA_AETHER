@@ -15,7 +15,7 @@ export default function NavBar() {
   const isDashboard = pathname === "/";
 
   return (
-    <div className="max-w-[1800px] mx-auto px-10 pt-7 w-full">
+    <div className="max-w-[1800px] mx-auto px-6 pt-7 w-full">
       <nav className="flex justify-between items-center border-b border-line pb-5 mb-6 flex-wrap gap-4">
         <div className="flex items-center gap-6">
           <Link
@@ -28,7 +28,7 @@ export default function NavBar() {
               width={1424}
               height={507}
               priority
-              className="h-9 w-auto"
+              className="h-12 w-auto"
             />
           </Link>
 
