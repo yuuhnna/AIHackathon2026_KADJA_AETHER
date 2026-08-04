@@ -124,7 +124,7 @@ export default function RehabilitationActivities() {
   }
 
   return (
-    <div className="max-w-[1800px] mx-auto px-10 pt-2 pb-14">
+    <main className="flex flex-1 flex-col px-6 pt-2 pb-14">
       <header className="pb-5 mb-6 border-b border-line">
         <div className="text-[10.5px] uppercase tracking-wider text-faint mb-1.5 flex items-center gap-1.5">
           <ArchiveIcon />
@@ -373,6 +373,6 @@ export default function RehabilitationActivities() {
           </div>
         </div>
       )}
-    </div>
+    </main>
   );
 }

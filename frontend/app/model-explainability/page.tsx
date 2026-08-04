@@ -103,7 +103,7 @@ export default function ExplainabilityPage() {
   }, []);
 
   return (
-    <main className="flex flex-1 flex-col px-10 pb-14 pt-0">
+    <main className="flex flex-1 flex-col px-6 pb-14 pt-0">
       <div className="w-full max-w-[1800px] mx-auto flex flex-col flex-1">
 
         <header className="pb-6 mb-6 border-b border-line">

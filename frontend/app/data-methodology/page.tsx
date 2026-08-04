@@ -104,7 +104,7 @@ const RULE_COVERED_FEATURES = new Set([
 
 export default function MethodologyPage() {
   return (
-    <div className="max-w-[1800px] mx-auto px-10 pb-14">
+    <div className="max-w-[1800px] mx-auto px-6 pb-14">
       <header className="pb-5 mb-6 border-b border-line">
         <h1 className="font-display text-xl font-bold text-ink flex items-center gap-2.5">
           Data &amp; Methodology
