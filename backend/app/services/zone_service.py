@@ -191,17 +191,27 @@ class ZoneService:
 
         risk_class = self._get_risk_class(zone_id)
 
-        # Use cached score if available, otherwise fall back to fresh predict
+        # Use cached vulnerability_score so it matches the table,
+        # but always run a fresh predict() for the detail panel so
+        # we get all 9 SHAP factors, not just the 3 stored in the
+        # bulk cache.
         if cached_summary is not None:
             vulnerability_score = cached_summary.vulnerability_score
-            top_factors = cached_summary.top_factors
         else:
-            prediction_result = self.model_service.predict(features, risk_class)
-            vulnerability_score = prediction_result["vulnerability_score"]
-            top_factors = prediction_result["top_factors"]
+            vulnerability_score = None
 
-        # Always run fresh predict for recommendations (not cached)
+        # Fresh single-zone predict — returns all features (top_n=10
+        # in model_service._top_factors), recommendations, and score.
         prediction_result = self.model_service.predict(features, risk_class)
+
+        # Use cached score if we have it (consistent with the table),
+        # otherwise use the fresh score.
+        if vulnerability_score is None:
+            vulnerability_score = prediction_result["vulnerability_score"]
+
+        # Always use the fresh top_factors so the detail panel shows
+        # all 9 contributing factors, not just the top 3 from the cache.
+        top_factors = prediction_result["top_factors"]
 
         return ZoneDetail(
             zone_id=zone["zone_id"],
