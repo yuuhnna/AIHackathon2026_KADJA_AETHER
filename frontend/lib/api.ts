@@ -140,16 +140,9 @@ export async function fetchErrorBySeverity(): Promise<ErrorByRangeItem[]> {
 export async function submitZoneAssessment(
   zoneId: string,
   recommendationIndex: number,
-  payload: ZoneAssessmentPayload
+  payload: ZoneAssessmentPayload & { recommendation_text?: string }
 ): Promise<void> {
-  const res = await fetch(
-    `/api/zones/${zoneId}/recommendations/${recommendationIndex}/assessments`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    }
-  );
-  if (!res.ok) throw new Error("Failed to save assessment.");
+  const { submitAssessmentToSupabase } = await import("./supabaseActivityStore");
+  await submitAssessmentToSupabase(zoneId, recommendationIndex, payload);
 }
  
