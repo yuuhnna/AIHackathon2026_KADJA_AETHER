@@ -4,17 +4,19 @@ export default function FeatureImportance({ items }: { items: FeatureImportanceI
   const maxImportance = Math.max(...items.map((i) => i.importance));
 
   return (
-    <div className="flex flex-col gap-[11px]">
+    <div className="flex flex-col gap-[14px]">
       {items.map((item) => (
-        <div key={item.feature} className="flex items-center gap-2.5 text-xs">
-          <div className="w-[190px] shrink-0 text-muted truncate">{item.label}</div>
-          <div className="flex-1 h-2 bg-ink/10 border border-line rounded-full overflow-hidden">
+        <div key={item.feature} className="flex items-center gap-3 text-xs">
+          <div className="w-[220px] shrink-0 text-muted truncate" title={item.label}>
+            {item.label}
+          </div>
+          <div className="flex-1 h-1.5 bg-ink/10 rounded-full overflow-hidden">
             <div
-              className="h-full bg-accent"
+              className="h-full bg-accent rounded-full"
               style={{ width: `${(item.importance / maxImportance) * 100}%` }}
             />
           </div>
-          <div className="w-11 text-right font-mono text-[11px] text-faint">
+          <div className="w-12 text-right font-mono text-[11px] text-muted shrink-0">
             {(item.importance * 100).toFixed(1)}%
           </div>
         </div>
