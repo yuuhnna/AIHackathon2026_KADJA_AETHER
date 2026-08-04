@@ -168,9 +168,14 @@ def load_current_mangrove_polygons(province):
         .filterBounds(province)
     )
 
-    count = polygons.size().getInfo()
+    polygons = polygons.map(
+        lambda f: f.set(
+            "zone_id",
+            ee.String("ZONE_").cat(f.id())
+        )
+    )
 
-    print(f"✓ Loaded {count} mangrove polygons")
+    print(f"✓ Loaded {polygons.size().getInfo()} mangrove polygons")
 
     return polygons
 
@@ -244,50 +249,39 @@ def add_vegetation_indices(image):
     return image.addBands([ndvi, mvi])
 
 
+# ============================================================================
+# VEGETATION FEATURES
+# ============================================================================
+
 def compute_vegetation_features(polygons, province):
     """
-    Computes mean NDVI and mean MVI
-    for every mangrove polygon.
+    Computes vegetation features for every mangrove polygon.
 
-    Returns
-    -------
-    pandas.DataFrame
+    Features
+    --------
+    mean_ndvi
+    mean_mvi
     """
 
     image = build_sentinel_composite(province)
 
     image = add_vegetation_indices(image)
 
-    stats = image.select(
-        ["NDVI", "MVI"]
-    ).reduceRegions(
+    vegetation_df = sample_image_at_centroid(
 
-        collection=polygons,
+        image=image.select(["NDVI", "MVI"]),
 
-        reducer=ee.Reducer.mean(),
+        polygons=polygons,
 
-        scale=10
+        band_mapping={
+
+            "NDVI": "mean_ndvi",
+
+            "MVI": "mean_mvi",
+
+        }
+
     )
-
-    rows = stats.getInfo()["features"]
-
-    print(rows[0]["properties"])
-
-    data = []
-
-    for i, feature in enumerate(rows):
-
-        props = feature["properties"]
-
-        data.append(
-            {
-                "zone_id": f"ZONE_{i+1:04d}",
-                "mean_ndvi": props.get("NDVI"),
-                "mean_mvi": props.get("MVI"),
-            }
-        )
-
-    vegetation_df = pd.DataFrame(data)
 
     print(
         f"✓ Vegetation features computed "
@@ -295,7 +289,6 @@ def compute_vegetation_features(polygons, province):
     )
 
     return vegetation_df
-
 
 
 def build_era5_collection(province):
@@ -316,72 +309,113 @@ def build_era5_collection(province):
 
 
 def build_climate_image(province):
-    """
-    Builds a single annual climate image from ERA5-Land Monthly.
-
-    Outputs:
-        mean_temperature (°C)
-        annual_precipitation (mm)
-        mean_wind_speed (m/s)
-    """
-
     era5 = build_era5_collection(province)
 
-    # ------------------------------------------------------------------
-    # Temperature
-    # ------------------------------------------------------------------
-
     temperature = (
-        era5
-        .select("temperature_2m")
-        .mean()
-        .subtract(273.15)
-        .rename("mean_temperature")
+        era5.select("temperature_2m").mean().subtract(273.15).rename("mean_temperature")
     )
-
-    # ------------------------------------------------------------------
-    # Precipitation
-    # ------------------------------------------------------------------
-
     precipitation = (
-        era5
-        .select("total_precipitation_sum")
-        .sum()
-        .multiply(1000)
-        .rename("annual_precipitation")
+        era5.select("total_precipitation_sum").sum().multiply(1000).rename("annual_precipitation")
     )
-
-    # ------------------------------------------------------------------
-    # Wind Speed
-    # ------------------------------------------------------------------
-
     wind = (
-        era5
-        .map(
-            lambda img: img.expression(
-                "sqrt(u*u + v*v)",
-                {
-                    "u": img.select("u_component_of_wind_10m"),
-                    "v": img.select("v_component_of_wind_10m"),
-                },
-            )
-            .rename("wind")
-        )
+        era5.map(lambda img: img.expression(
+            "sqrt(u*u + v*v)",
+            {"u": img.select("u_component_of_wind_10m"), "v": img.select("v_component_of_wind_10m")},
+        ).rename("wind"))
         .mean()
         .rename("mean_wind_speed")
     )
 
-    climate = temperature.addBands(
-        [
-            precipitation,
-            wind,
-        ]
-    )
+    climate = temperature.addBands([precipitation, wind])
+    band_names = climate.bandNames()
 
-    print("✓ Annual climate image created.")
+    # ERA5-Land masks ocean cells, and most mangrove zones sit on the coast.
+    # focal_mean() alone does NOT fill this -- its default skipMasked=True
+    # keeps the output masked wherever the input was masked. Use
+    # reduceNeighborhood directly with skipMasked=False, iterating a few
+    # times to reach far enough inland. Rename back since reduceNeighborhood
+    # appends "_mean" to every band name.
+    kernel = ee.Kernel.square(radius=2, units="pixels")
 
+    for _ in range(6):
+        climate = climate.reduceNeighborhood(
+            reducer=ee.Reducer.mean(),
+            kernel=kernel,
+            skipMasked=False,
+        ).rename(band_names)
+
+    print("✓ Annual climate image created (gap-filled).")
     return climate
 
+
+def compute_climate_features(polygons, province):
+    climate = build_climate_image(province)
+
+    climate_df = sample_image_at_centroid(
+        image=climate,
+        polygons=polygons,
+        band_mapping={
+            "mean_temperature": "mean_temperature",
+            "annual_precipitation": "annual_precipitation",
+            "mean_wind_speed": "mean_wind_speed",
+        },
+    )
+
+    print(f"✓ Climate features computed ({len(climate_df)} polygons)")
+    return climate_df
+
+
+# ============================================================================
+# GENERIC IMAGE SAMPLER
+# ============================================================================
+def sample_image_at_centroid(image, polygons, band_mapping):
+
+    def sample(feature):
+
+        centroid = feature.geometry().centroid(1)
+
+        pixel = image.reduceRegion(
+            reducer=ee.Reducer.first(),
+            geometry=centroid.buffer(6000),
+            scale=1000,
+            maxPixels=1e9
+        )
+
+        values = ee.Dictionary(
+            ee.Algorithms.If(
+                pixel,
+                pixel,
+                ee.Dictionary({})
+            )
+        )
+
+        values = values.set(
+            "zone_id",
+            feature.get("zone_id")
+        )
+
+        return ee.Feature(None, values)
+
+    sampled = polygons.map(sample)
+
+    rows = sampled.getInfo()["features"]
+
+    data = []
+
+    for row in rows:
+
+        props = row["properties"]
+
+        record = {
+            "zone_id": props.get("zone_id")
+        }
+
+        for ee_band, column_name in band_mapping.items():
+            record[column_name] = props.get(ee_band)
+
+        data.append(record)
+
+    return pd.DataFrame(data)
 
 # ============================================================================
 # MAIN
@@ -416,9 +450,13 @@ def main():
     print(vegetation_df.head())
 
     era5 = build_era5_collection(province)
-    print(
-        era5.first().bandNames().getInfo()
+
+    climate_df = compute_climate_features(
+        polygons,
+        province
     )
+
+    print(climate_df.head())
 
 if __name__ == "__main__":
     main()
