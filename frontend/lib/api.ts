@@ -2,10 +2,8 @@ import type {
   ZoneSummary,
   SummaryStats,
   FeatureImportanceItem,
-  ModelMetrics,
-  ErrorByRangeItem
+  ModelMetrics
 } from "./types";
-
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -18,11 +16,11 @@ async function getJSON<T>(path: string): Promise<T> {
 }
 
 export function fetchFeatureImportance(): Promise<FeatureImportanceItem[]> {
-  return getJSON<FeatureImportanceItem[]>("/feature-importance");
+  return getJSON<FeatureImportanceItem[]>("/api/feature-importance");
 }
 
 export function fetchModelMetrics(): Promise<ModelMetrics> {
-  return getJSON<ModelMetrics>("/model-metrics");
+  return getJSON<ModelMetrics>("/api/model-metrics");
 }
 
 // Shape actually returned by /zones today. risk_class and confidence_flag
@@ -39,10 +37,11 @@ interface BackendZoneSummary {
   confidence_flag?: string;
 }
 
-// The backend doesn't yet provide top_factors, recommendations, or
+// The bulk /zones list doesn't include top_factors, recommendations, or
 // rehabilitation_status — this fills them with safe defaults so
-// DetailPanel and ZoneTable don't crash reading undefined fields, until
-// those are added backend-side.
+// DetailPanel and ZoneTable don't crash reading undefined fields.
+// Real top_factors/recommendations are fetched separately per zone via
+// fetchZoneDetail() below when a zone is actually selected.
 function toFrontendZone(z: BackendZoneSummary): ZoneSummary {
   return {
     zone_id: z.zone_id,
@@ -63,15 +62,57 @@ export async function fetchZones(): Promise<ZoneSummary[]> {
   const data = await getJSON<BackendZoneSummary[]>("/zones");
   return data.map(toFrontendZone);
 }
- 
-export async function fetchErrorBySeverity(): Promise<ErrorByRangeItem[]> {
-  const data = await getJSON<any[]>("/error-by-severity");
 
-  return data.map((item) => ({
-    range: item.range,
-    sampleSize: item.sample_size,
-    mae: item.mae,
-    errorMin: item.error_min,
-    errorMax: item.error_max,
-  }));
+interface BackendSummaryResponse {
+  total_mangrove_zones: number;
+  total_mangrove_area_ha: number;
+  highest_predicted_area_loss_pct: number;
+  active_rehabilitation_initiatives: number;
+}
+
+export async function fetchSummary(): Promise<SummaryStats> {
+  const data = await getJSON<BackendSummaryResponse>("/summary");
+  return {
+    total_zones: data.total_mangrove_zones,
+    total_area_ha: data.total_mangrove_area_ha,
+    max_area_loss_percent: data.highest_predicted_area_loss_pct,
+    active_rehabilitation_count: data.active_rehabilitation_initiatives,
+  };
+}
+
+// Shape returned by GET /zones/{zone_id} — richer than the bulk list,
+// with real SHAP-derived contributing factors and rule-based
+// recommendations (both only computed per-zone, not in bulk, since
+// running SHAP across all 1,332 zones at once was too expensive).
+interface BackendContributingFactor {
+  feature: string;
+  label: string;
+  shap_value: number;
+  direction: "increases" | "decreases";
+}
+
+interface BackendZoneDetail extends BackendZoneSummary {
+  raw_features: Record<string, number | null>;
+  top_factors: BackendContributingFactor[];
+  recommendations: string[];
+}
+
+function toFrontendZoneDetail(z: BackendZoneDetail): ZoneSummary {
+  return {
+    ...toFrontendZone(z),
+    // Backend's ContributingFactor uses shap_value/feature/direction;
+    // the frontend's ZoneFactor is just { label, value } — DetailPanel
+    // derives the increase/decrease arrow from the sign of value itself,
+    // so shap_value maps directly without needing direction separately.
+    top_factors: z.top_factors.map((f) => ({
+      label: f.label,
+      value: f.shap_value,
+    })),
+    recommendations: z.recommendations,
+  };
+}
+
+export async function fetchZoneDetail(zoneId: string): Promise<ZoneSummary> {
+  const data = await getJSON<BackendZoneDetail>(`/zones/${zoneId}`);
+  return toFrontendZoneDetail(data);
 }

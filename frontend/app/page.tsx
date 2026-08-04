@@ -6,17 +6,10 @@ import KpiRow from "@/components/KpiRow";
 import ZoneTable from "@/components/ZoneTable";
 import DetailPanel from "@/components/DetailPanel";
 import { MapPinIcon, CloseIcon } from "@/components/icons";
-import { fetchZones } from "@/lib/api";
+import { fetchZones, fetchSummary, fetchZoneDetail } from "@/lib/api";
 import type { SummaryStats, ZoneSummary } from "@/lib/types";
 
 const RealMap = dynamic(() => import("@/components/RealMap"), { ssr: false });
-
-const placeholderSummary: SummaryStats = {
-  total_zones: 128,
-  total_area_ha: 1152,
-  max_area_loss_percent: 4.7,
-  active_rehabilitation_count: 12,
-};
 
 const LEGEND_ITEMS = [
   { label: "Top 10%", colorClass: "bg-risk-high" },
@@ -26,26 +19,28 @@ const LEGEND_ITEMS = [
 
 export default function Home() {
   const [zones, setZones] = useState<ZoneSummary[]>([]);
+  const [summary, setSummary] = useState<SummaryStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const [selectedZoneId, setSelectedZoneId] = useState<string | null>(null);
   const [filteredZones, setFilteredZones] = useState<ZoneSummary[]>([]);
 
-  // Fetch real zones from the backend once on mount.
+  // Fetch real zones and summary stats from the backend once on mount.
   useEffect(() => {
     let cancelled = false;
 
-    fetchZones()
-      .then((data) => {
+    Promise.all([fetchZones(), fetchSummary()])
+      .then(([zonesData, summaryData]) => {
         if (cancelled) return;
-        setZones(data);
-        setFilteredZones(data);
+        setZones(zonesData);
+        setFilteredZones(zonesData);
+        setSummary(summaryData);
         setLoading(false);
       })
       .catch((err) => {
         if (cancelled) return;
-        setError(err instanceof Error ? err.message : "Failed to load zones.");
+        setError(err instanceof Error ? err.message : "Failed to load dashboard data.");
         setLoading(false);
       });
 
@@ -65,15 +60,42 @@ export default function Home() {
     if (selectedZone) setDisplayedZone(selectedZone);
   }, [selectedZone]);
 
+  // The bulk zones list has empty top_factors/recommendations — fetch
+  // the real, richer per-zone detail (SHAP-based factors + rule-based
+  // recommendations) whenever a new zone is selected. detailZone starts
+  // as the bulk-list version (so the panel shows something immediately)
+  // and gets replaced once the real detail arrives.
+  const [detailZone, setDetailZone] = useState<ZoneSummary | null>(null);
+  useEffect(() => {
+    if (!selectedZone) return;
+
+    let cancelled = false;
+    setDetailZone(selectedZone);
+
+    fetchZoneDetail(selectedZone.zone_id)
+      .then((detail) => {
+        if (cancelled) return;
+        setDetailZone(detail);
+      })
+      .catch(() => {
+        // Keep showing the bulk-list version (empty factors) rather
+        // than breaking the panel if the detail fetch fails.
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedZone]);
+
   const isPanelOpen = selectedZone !== null;
 
   return (
     <main className="flex flex-1 flex-col px-6 pt-2 pb-8 gap-5">
-      <KpiRow summary={placeholderSummary} />
+      {summary && <KpiRow summary={summary} />}
 
       {error && (
         <div className="rounded-lg border border-risk-high/30 bg-risk-high/5 px-4 py-3 text-[12.5px] text-risk-high">
-          Couldn&apos;t load zones from the server: {error}. Is the backend running at{" "}
+          Couldn&apos;t load dashboard data from the server: {error}. Is the backend running at{" "}
           <code className="font-mono">http://localhost:8000</code>?
         </div>
       )}
@@ -125,7 +147,7 @@ export default function Home() {
               </div>
               <div className="border-t border-line mx-5" />
               <div className="p-5 pb-10">
-                <DetailPanel zone={displayedZone} />
+                <DetailPanel zone={detailZone} />
               </div>
             </div>
 

@@ -36,6 +36,8 @@ class SummaryService:
             self.model_service.feature_columns
         ]
 
+        # predict_batch returns a plain list[float] of vulnerability
+        # scores (not a DataFrame) — see model_service.py.
         predictions = self.model_service.predict_batch(X)
 
         highest_prediction = max(predictions)
@@ -44,8 +46,8 @@ class SummaryService:
             total_mangrove_zones=total_zones,
             total_mangrove_area_ha=total_area,
             highest_predicted_area_loss_pct=round(
-            highest_prediction,
-            2
+                float(highest_prediction),
+                2
             ),
             active_rehabilitation_initiatives=0   # NOTE: Hardcoded temporarily, add implementation after rehabilitations activities is implemented
         )
