@@ -35,6 +35,9 @@ import ee
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
+import fiona
+import pyogrio
+import geopandas as gpd
 
 
 # ============================================================================
@@ -43,12 +46,13 @@ from datetime import datetime, timedelta
 
 PROJECT_ID = "rising-capsule-503003-c4"
 
-OUTPUT_PATH = (
-    Path(__file__).resolve().parent.parent
-    / "data"
-    / "processed"
-    / "current_feature_table.csv"
-)
+
+GADM_MUNICIPALITY_LAYER = "ADM_ADM_2" 
+
+DATA_DIR = Path(r"C:\Users\admin\AIHackathon2026_KADJA_AETHER\backend\data\raw\processed")
+
+OUTPUT_PATH = DATA_DIR / "current_feature_table.csv"
+GADM_PATH = DATA_DIR / "gadm41_PHL.gpkg"
 
 # End date = today (UTC)
 END_DATE = datetime.utcnow().date()
@@ -179,6 +183,74 @@ def load_current_mangrove_polygons(province):
 
     return polygons
 
+
+def compute_zone_locations(polygons):
+    """
+    Computes centroid latitude/longitude for every mangrove polygon.
+    """
+
+    def add_centroid(feature):
+        centroid = feature.geometry().centroid(1)
+        coords = centroid.coordinates()
+        return feature.set({
+            "lon": coords.get(0),
+            "lat": coords.get(1),
+        })
+
+    located = polygons.map(add_centroid)
+
+    rows = located.select(["zone_id", "lat", "lon"]).getInfo()["features"]
+
+    data = []
+    for row in rows:
+        props = row["properties"]
+        data.append({
+            "zone_id": props.get("zone_id"),
+            "lat": props.get("lat"),
+            "lon": props.get("lon"),
+        })
+
+    location_df = pd.DataFrame(data)
+
+    print(f"✓ Zone locations computed ({len(location_df)} polygons)")
+
+    return location_df
+
+
+def compute_municipality_features(location_df):
+    municipalities = (
+        gpd.read_file(GADM_PATH, layer=GADM_MUNICIPALITY_LAYER)
+        .to_crs("EPSG:4326")[["NAME_2", "geometry"]]
+    )
+
+    zones_gdf = gpd.GeoDataFrame(
+        location_df.copy(),
+        geometry=gpd.points_from_xy(location_df["lon"], location_df["lat"]),
+        crs="EPSG:4326",
+    )
+
+    joined = gpd.sjoin(zones_gdf, municipalities, how="left", predicate="within")
+
+    unmatched_mask = joined["NAME_2"].isna()
+    if unmatched_mask.any():
+        nearest = gpd.sjoin_nearest(
+            zones_gdf[unmatched_mask],
+            municipalities,
+            how="left",
+        )
+        joined.loc[unmatched_mask, "NAME_2"] = nearest["NAME_2"].values
+
+    municipality_df = joined[["zone_id", "NAME_2"]].rename(
+        columns={"NAME_2": "municipality"}
+    )
+
+    still_missing = municipality_df["municipality"].isna().sum()
+    if still_missing:
+        print(f"⚠ {still_missing} zones still unmatched after nearest-neighbor fallback")
+
+    print(f"✓ Municipality lookup computed ({len(municipality_df)} polygons)")
+
+    return municipality_df
 
 # ============================================================================
 # SENTINEL-2
@@ -455,8 +527,8 @@ def compute_terrain_features(polygons, province):
         image=srtm,
         polygons=polygons,
         band_mapping={
-            "elevation": "elevation_m",
-            "slope": "slope_deg",
+            "elevation": "mean_elevation",
+            "slope": "mean_slope",
         },
     )
 
@@ -483,9 +555,8 @@ def compute_distance_features(polygons, province):
 
     distance_df = pd.DataFrame({
         "zone_id": zone_ids,
-        "dist_aquaculture_m": -1,
-        "dist_river_m": -1,
-        "dist_road_m": -1,
+        "nearest_distance_to_aquaculture_m": -1,
+        "nearest_distance_to_roads_m": -1,
     })
 
     print(f"⚠ Distance features are placeholders ({len(distance_df)} polygons)")
@@ -493,15 +564,12 @@ def compute_distance_features(polygons, province):
     return distance_df
 
 
-def merge_feature_tables(vegetation_df, climate_df, terrain_df, distance_df):
-    """
-    Merges vegetation, climate, terrain, and distance features into a
-    single inference-ready table, keyed on zone_id.
-    """
-
+def merge_feature_tables(vegetation_df, climate_df, terrain_df, distance_df, location_df, municipality_df):
     feature_table = vegetation_df.merge(climate_df, on="zone_id", how="left")
     feature_table = feature_table.merge(terrain_df, on="zone_id", how="left")
     feature_table = feature_table.merge(distance_df, on="zone_id", how="left")
+    feature_table = feature_table.merge(location_df, on="zone_id", how="left")
+    feature_table = feature_table.merge(municipality_df, on="zone_id", how="left")
 
     print(
         f"✓ Feature tables merged "
@@ -543,53 +611,55 @@ def main():
     print("----------------------------")
     print(f"GMW Year : {GMW_YEAR}")
     print(f"Patches  : {polygons.size().getInfo():,}")
-    
+
     print("\n✓ Foundation loaded successfully.")
     print("Ready for feature extraction.")
 
-    vegetation_df = compute_vegetation_features(
-        polygons,
-        province
-    )
-
-
+    vegetation_df = compute_vegetation_features(polygons, province)
     print(vegetation_df.head())
 
     era5 = build_era5_collection(province)
 
-    climate_df = compute_climate_features(
-        polygons,
-        province
-    )
-
+    climate_df = compute_climate_features(polygons, province)
     print(climate_df.head())
 
-    terrain_df = compute_terrain_features(
-        polygons,
-        province
-    )
-
+    terrain_df = compute_terrain_features(polygons, province)
     print(terrain_df.head())
 
-    distance_df = compute_distance_features(
-        polygons,
-        province
-    )
-
+    distance_df = compute_distance_features(polygons, province)
     print(distance_df.head())
+
+    location_df = compute_zone_locations(polygons)
+    print(location_df.head())
+
+    municipality_df = compute_municipality_features(location_df)
+    print(municipality_df.head())
 
     feature_table = merge_feature_tables(
         vegetation_df,
         climate_df,
         terrain_df,
-        distance_df
+        distance_df,
+        location_df,
+        municipality_df,
     )
+
+    print(len(feature_table))                             # should be 398
+    print(feature_table["zone_id"].duplicated().sum())     # should be 0
+    print(feature_table["municipality"].isna().sum())      # should be 0
 
     export_feature_table(feature_table)
 
     print(feature_table.head())
-    print(len(feature_table))                    # should be 398
-    print(feature_table["zone_id"].duplicated().sum())  # should be 0
+
+
+    for layer_name, _ in pyogrio.list_layers(GADM_PATH):
+        gdf = gpd.read_file(GADM_PATH, layer=layer_name)
+        name_cols = [c for c in gdf.columns if c.startswith("NAME_")]
+        for col in name_cols:
+            if "Ajuy" in gdf[col].values:
+                print(f"Found 'Ajuy' in layer={layer_name}, column={col}")
+
 
 if __name__ == "__main__":
     main()
