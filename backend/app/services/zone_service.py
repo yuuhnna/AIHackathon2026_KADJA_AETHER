@@ -160,6 +160,8 @@ class ZoneService:
     ) -> ZoneDetail | None:
         """
         Returns one monitored zone.
+        Reuses the cached vulnerability_score and top_factors from
+        get_all_zones() so the detail panel always matches the table.
         """
 
         zone = self.data_service.get_zone(zone_id)
@@ -167,15 +169,21 @@ class ZoneService:
         if zone is None:
             return None
 
+        # Get the cached summary so vulnerability_score is identical
+        # to what the table shows — avoids tiny float differences between
+        # a fresh single predict() and the batch predict_batch() result.
+        cached_summary = next(
+            (s for s in self.get_all_zones() if s.zone_id == zone_id),
+            None
+        )
+
         features = {
             feature: zone[feature]
             for feature in FEATURE_COLUMNS
         }
 
         raw_features = {}
-
         for key, value in features.items():
-
             if isinstance(value, float) and math.isnan(value):
                 raw_features[key] = None
             else:
@@ -183,55 +191,29 @@ class ZoneService:
 
         risk_class = self._get_risk_class(zone_id)
 
-        prediction_result = (
-            self.model_service.predict(
-                features,
-                risk_class
-            )
-        )
+        # Use cached score if available, otherwise fall back to fresh predict
+        if cached_summary is not None:
+            vulnerability_score = cached_summary.vulnerability_score
+            top_factors = cached_summary.top_factors
+        else:
+            prediction_result = self.model_service.predict(features, risk_class)
+            vulnerability_score = prediction_result["vulnerability_score"]
+            top_factors = prediction_result["top_factors"]
 
+        # Always run fresh predict for recommendations (not cached)
+        prediction_result = self.model_service.predict(features, risk_class)
 
         return ZoneDetail(
-
             zone_id=zone["zone_id"],
-
             lat=zone["lat"],
-
             lon=zone["lon"],
-
             municipality=zone["municipality"],
-
-
-            vulnerability_score=
-                prediction_result[
-                    "vulnerability_score"
-                ],
-
-
-            expected_area_loss=round(
-                prediction_result[
-                    "vulnerability_score"
-                ] / 100 * ZONE_AREA_HA,
-                2
-            ),
-
+            vulnerability_score=vulnerability_score,
+            expected_area_loss=round(vulnerability_score / 100 * ZONE_AREA_HA, 2),
             risk_class=risk_class,
-
             confidence_flag=self._confidence_flag(zone),
-
-
-            top_factors=
-                prediction_result[
-                    "top_factors"
-                ],
-
-
-            recommendations=
-                prediction_result[
-                    "recommendations"
-                ],
-
-
+            top_factors=top_factors,
+            recommendations=prediction_result["recommendations"],
             raw_features=raw_features
         )
 

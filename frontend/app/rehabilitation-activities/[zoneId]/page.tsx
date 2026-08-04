@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { MOCK_ZONES } from "@/lib/mockZones";
@@ -8,6 +8,8 @@ import { selectZoneActivities, useActivities } from "@/lib/activityStore";
 import { REHAB_STATUS_PILL_CLASS } from "@/lib/colors";
 import { formatIsoDate } from "@/lib/dates";
 import { ZONE_AREA_HA } from "@/lib/types";
+import type { ZoneSummary } from "@/lib/types";
+import { fetchZoneDetail } from "@/lib/api";
 import { ChevronLeftIcon, PersonIcon, CalendarIcon } from "@/components/icons";
 
 export default function RehabilitationAreaPage() {
@@ -21,13 +23,29 @@ export default function RehabilitationAreaPage() {
     [activities, zoneId]
   );
 
-  // If the zone isn't in MOCK_ZONES (e.g. logged via Supabase from the
-  // recommendation form), build a minimal display object from the activity
-  // data so the page still renders.
+  const [apiZone, setApiZone] = useState<ZoneSummary | null>(null);
+  const [loadingZone, setLoadingZone] = useState(true);
+
+  // Always fetch from the backend API to get the live vulnerability_score
+  useEffect(() => {
+    setLoadingZone(true);
+    fetchZoneDetail(zoneId)
+      .then((z) => {
+        setApiZone(z);
+        setLoadingZone(false);
+      })
+      .catch(() => {
+        setLoadingZone(false);
+      });
+  }, [zoneId]);
+
   const zone = useMemo(() => {
+    // While loading, return null so we show a skeleton instead of 0.00%
+    if (loadingZone) return null;
+    // Prefer live API data; fall back to mock; last resort is minimal object
+    if (apiZone) return apiZone;
     if (mockZone) return mockZone;
     if (zoneActivities.length === 0) return null;
-    // Derive municipality from zone_id prefix (e.g. "CARLES-0217" → "Carles")
     const prefix = zoneId.split("-")[0];
     const municipality =
       prefix.charAt(0).toUpperCase() + prefix.slice(1).toLowerCase();
@@ -44,7 +62,7 @@ export default function RehabilitationAreaPage() {
       top_factors: [],
       recommendations: [],
     };
-  }, [mockZone, zoneActivities, zoneId]);
+  }, [loadingZone, mockZone, apiZone, zoneActivities, zoneId]);
 
   return (
     <main className="flex flex-1 flex-col px-6 pt-2 pb-14">
@@ -57,14 +75,34 @@ export default function RehabilitationAreaPage() {
         Rehabilitation Activities
       </Link>
 
-      {!zone ? (
+      {/* Loading skeleton while fetching zone data */}
+      {loadingZone && (
+        <div className="bg-bg-panel-alt border border-line rounded-2xl overflow-hidden mb-6 flex flex-col sm:flex-row animate-pulse">
+          <div className="p-5 flex-1">
+            <div className="h-6 w-32 bg-line rounded mb-2" />
+            <div className="h-3 w-24 bg-line rounded mb-4" />
+            <div className="flex gap-6">
+              <div className="h-4 w-16 bg-line rounded" />
+              <div className="h-4 w-24 bg-line rounded" />
+            </div>
+          </div>
+          <div className="bg-ink p-5 flex flex-col justify-center sm:w-[220px] shrink-0">
+            <div className="h-3 w-28 bg-white/20 rounded mb-2" />
+            <div className="h-8 w-20 bg-white/20 rounded" />
+          </div>
+        </div>
+      )}
+
+      {!loadingZone && !zone && (
         <div className="bg-bg-panel border border-line rounded-2xl py-16 px-6 text-center">
           <p className="font-display text-base font-semibold text-ink mb-1.5">Zone not found</p>
           <p className="text-[12.5px] text-muted">
             &quot;{zoneId}&quot; doesn&apos;t match a monitored zone.
           </p>
         </div>
-      ) : (
+      )}
+
+      {!loadingZone && zone && (
         <>
           <div className="bg-bg-panel-alt border border-line rounded-2xl overflow-hidden mb-6 flex flex-col sm:flex-row">
             <div className="p-5 flex-1">
@@ -89,12 +127,12 @@ export default function RehabilitationAreaPage() {
                 </div>
               </div>
             </div>
-            <div className="bg-ink text-white p-5 flex flex-col justify-center sm:w-[220px] shrink-0">
+            <div className="bg-ink text-white p-5 flex flex-col justify-center sm:w-[260px] shrink-0">
               <div className="text-[10.5px] uppercase tracking-wider text-white/60 mb-1">
-                Expected Percentage Loss
+                Predicted Mangrove Area Loss
               </div>
               <div className="font-display text-[28px] font-semibold">
-                {zone.expected_area_loss.toFixed(1)}%
+                {zone.expected_area_loss.toFixed(2)}%
               </div>
             </div>
           </div>
