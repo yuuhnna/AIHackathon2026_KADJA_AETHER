@@ -8,6 +8,7 @@ import DetailPanel from "@/components/DetailPanel";
 import { MapPinIcon, CloseIcon } from "@/components/icons";
 import { fetchZones, fetchSummary, fetchZoneDetail } from "@/lib/api";
 import type { SummaryStats, ZoneSummary } from "@/lib/types";
+import {useRouter} from "next/navigation"
 
 const RealMap = dynamic(() => import("@/components/RealMap"), { ssr: false });
 

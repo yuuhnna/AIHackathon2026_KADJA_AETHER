@@ -1,5 +1,6 @@
 import type { ZoneSummary } from "@/lib/types";
 import { RISK_LABEL } from "@/lib/colors";
+import {useRouter} from "next/navigation";
 
 function AlertIcon({ className }: { className?: string }) {
   return (
@@ -75,6 +76,9 @@ export default function DetailPanel({
   );
   const maxAbsImpact = Math.max(...sortedFactors.map((f) => Math.abs(f.value)), 0.0001);
 
+
+  const router = useRouter();
+
   return (
     <div>
       <section>
@@ -133,7 +137,7 @@ export default function DetailPanel({
 
         <button
           type="button"
-          onClick={() => onActionsClick?.(zone.recommendations)}
+          onClick={() => router.push(`/recommendation/${zone.zone_id}`)}
           className="group w-full text-left rounded-lg border border-line hover:border-accent/50 bg-bg-panel-alt/40 hover:bg-bg-panel-alt transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         >
           <ul className="list-none">
@@ -150,7 +154,7 @@ export default function DetailPanel({
             ))}
           </ul>
           <div className="flex items-center justify-end gap-1 px-3 py-2 border-t border-line-soft bg-bg-panel-alt/30 group-hover:bg-accent/5 text-[10.5px] text-faint group-hover:text-accent transition-colors rounded-b-lg">
-            Log to rehabilitation activity
+            View validation checklist
             <ChevronRightIcon className="group-hover:translate-x-0.5 transition-transform" />
           </div>
         </button>
