@@ -208,7 +208,7 @@ export default function ExplainabilityPage() {
         )}
 
         {!loading && !error && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5" style={{ gridAutoRows: "340px" }}>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5" style={{ gridAutoRows: "minmax(340px, auto)" }}>
             {/* Feature importance */}
             <div className="bg-bg-panel border border-line rounded-2xl shadow-[0_2px_8px_-2px_rgba(22,36,30,0.08),0_1px_2px_rgba(22,36,30,0.04)] overflow-hidden flex flex-col">
               <div className="flex justify-between items-center px-5 py-3.5 border-b border-line bg-bg-panel-alt shrink-0">
@@ -231,7 +231,7 @@ export default function ExplainabilityPage() {
                   <span className="text-ink">How to read this</span>
                 </h2>
               </div>
-              <div className="px-5 py-4 flex-1 overflow-y-auto text-[12.5px] text-muted leading-relaxed space-y-3.5">
+              <div className="px-5 py-4 flex-1 text-[12.5px] text-muted leading-relaxed space-y-3.5">
                 <p>
                   This chart shows what the Random Forest model relies on most across{" "}
                   <strong className="text-ink">every</strong>{" "}
