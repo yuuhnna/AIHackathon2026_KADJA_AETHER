@@ -8,7 +8,10 @@ trained AI model.
 from app.config import FEATURE_COLUMNS, LOW_ELEVATION_CONFIDENCE_THRESHOLD_M, FEATURE_LABELS
 from app.schemas.zone import (
     ZoneSummary,
-    ZoneDetail
+    ZoneDetail,
+    ZoneGeoCollection,
+    ZoneGeoFeature,
+    ZoneGeoProperties
 )
 from app.services.data_service import (
     get_data_service
@@ -140,6 +143,36 @@ class ZoneService:
 
         self._zone_summaries_cache = summaries
         return summaries
+
+
+    def get_zones_geojson(self) -> ZoneGeoCollection:
+        """
+        Returns every zone's real footprint as a GeoJSON
+        FeatureCollection, carrying the same municipality-relative
+        risk_class the table and detail panel use — so the map colours a
+        shape exactly the way the rest of the dashboard ranks it.
+
+        Zones whose geometry failed to parse are omitted; they still
+        appear everywhere else in the app.
+        """
+
+        geometries = self.data_service.get_zone_geometries()
+
+        features = [
+            ZoneGeoFeature(
+                geometry=geometries[summary.zone_id],
+                properties=ZoneGeoProperties(
+                    zone_id=summary.zone_id,
+                    risk_class=summary.risk_class,
+                    vulnerability_score=summary.vulnerability_score,
+                    municipality=summary.municipality,
+                ),
+            )
+            for summary in self.get_all_zones()
+            if summary.zone_id in geometries
+        ]
+
+        return ZoneGeoCollection(features=features)
 
 
     def _get_risk_class(self, zone_id: str) -> str:

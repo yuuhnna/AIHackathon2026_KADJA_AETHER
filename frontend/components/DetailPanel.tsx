@@ -46,7 +46,7 @@ export default function DetailPanel({ zone }: { zone: ZoneSummary | null }) {
   if (!zone) {
     return (
       <div className="text-faint text-[12.5px] leading-relaxed py-3">
-        No zone selected. Click a marker on the map or a row in the table to see its
+        No zone selected. Click a zone on the map or a row in the table to see its
         predicted vulnerability, contributing factors, and recommended actions.
       </div>
     );

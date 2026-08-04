@@ -6,6 +6,21 @@ export const RISK_COLOR: Record<RiskClass, string> = {
   high: "#D14343",
 };
 
+// Fill colours for the zone map only — deliberately NOT the same palette
+// as RISK_COLOR above.
+//
+// The map draws each monitored zone as two stacked layers, and the pair
+// is the whole point of it: green is the mangrove standing there today,
+// red is the slice of that green the model expects to be gone a year
+// from now. So red is a quantity, not a risk tier — it is sized to each
+// zone's own predicted loss, and every zone has some.
+//
+// Risk tiers are still tiers wherever text names one: the table pills,
+// the detail panel and the map tooltip all keep RISK_COLOR, so Next 20%
+// stays amber when you read it or press it.
+export const ZONE_MANGROVE_FILL = "#22B573";
+export const ZONE_LOSS_OVERLAY = "#FF2D1A";
+
 // Solid risk pills (white text on a saturated risk color) — shared by
 // ZoneTable (Dashboard) and the Rehabilitation Activities pages.
 export const RISK_PILL_CLASS: Record<RiskClass, string> = {

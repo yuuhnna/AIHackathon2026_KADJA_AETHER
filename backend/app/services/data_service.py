@@ -5,9 +5,11 @@ Loads and provides access to the monitored mangrove
 zone dataset.
 """
 
+import json
+
 import pandas as pd
 
-from app.config import FEATURE_TABLE_PATH, ERROR_BY_SEVERITY_PATH
+from app.config import FEATURE_TABLE_PATH, ERROR_BY_SEVERITY_PATH, GEOMETRY_COLUMN
 
 
 class DataService:
@@ -38,6 +40,43 @@ class DataService:
                 df[col] = 0.0
 
         self.dataset = df
+        self._geometries = self._parse_geometries(df)
+
+    @staticmethod
+    def _parse_geometries(df: pd.DataFrame) -> dict[str, dict]:
+        """
+        Parses the GeoJSON geometry string column into real geometry
+        dicts, keyed by zone_id.
+
+        Parsed once at startup rather than per request — the map asks for
+        all 398 footprints at once, and json.loads over the whole column
+        is the expensive part of serving them.
+
+        Rows with a missing or malformed geometry are skipped rather than
+        raising: a zone with no footprint should still appear in the
+        table and predictions, just not on the map.
+        """
+        if GEOMETRY_COLUMN not in df.columns:
+            return {}
+
+        geometries: dict[str, dict] = {}
+
+        for zone_id, raw in zip(df["zone_id"], df[GEOMETRY_COLUMN]):
+            if not isinstance(raw, str):
+                continue
+            try:
+                geometries[zone_id] = json.loads(raw)
+            except json.JSONDecodeError:
+                continue
+
+        return geometries
+
+    def get_zone_geometries(self) -> dict[str, dict]:
+        """
+        Returns every zone's GeoJSON geometry, keyed by zone_id.
+        """
+
+        return self._geometries
 
     def get_all_zones(self) -> list[dict]:
         """

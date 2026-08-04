@@ -15,6 +15,28 @@ export interface ZoneFactor {
   value: number;
 }
 
+// Real zone footprints, served by GET /zones/geojson and handed straight
+// to Leaflet's L.geoJSON(). Geometry is left as a loose GeoJSON object —
+// Leaflet validates it at render time, and re-declaring the Polygon /
+// MultiPolygon union here would only duplicate what @types/geojson
+// already models.
+export interface ZoneGeoFeature {
+  type: "Feature";
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  geometry: any;
+  properties: {
+    zone_id: string;
+    risk_class: RiskClass;
+    vulnerability_score: number;
+    municipality: string;
+  };
+}
+
+export interface ZoneGeoCollection {
+  type: "FeatureCollection";
+  features: ZoneGeoFeature[];
+}
+
 export interface ZoneRawFeatures {
   mean_ndvi?: number;
   mean_mvi?: number;

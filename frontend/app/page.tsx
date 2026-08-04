@@ -16,12 +16,6 @@ import type { SummaryStats, ZoneSummary } from "@/lib/types";
 
 const RealMap = dynamic(() => import("@/components/RealMap"), { ssr: false });
 
-const LEGEND_ITEMS = [
-  { label: "Top 10%", colorClass: "bg-risk-high" },
-  { label: "Next 20%", colorClass: "bg-risk-moderate" },
-  { label: "Remaining 70%", colorClass: "bg-risk-low" },
-] as const;
-
 export default function Home() {
   const [zones, setZones] = useState<ZoneSummary[]>([]);
   const [summary, setSummary] = useState<SummaryStats | null>(null);
@@ -137,8 +131,12 @@ export default function Home() {
               onSelect={setSelectedZoneId}
             />
 
+            {/* Needs its own opaque background. It used to rely on
+                backdrop-blur alone, which read fine over the old pale
+                street tiles but leaves dark ink on dark satellite
+                imagery now that the map is photographic. */}
             <div
-              className={`aether-panel-scroll absolute top-0 right-0 h-full w-[560px] max-w-[92%] backdrop-blur-sm border-l border-line shadow-[-8px_0_24px_-8px_rgba(22,36,30,0.2)] overflow-y-auto z-[500] rounded-r-xl transition-transform duration-300 ease-in-out ${
+              className={`aether-panel-scroll absolute top-0 right-0 h-full w-[560px] max-w-[92%] bg-bg-panel/95 backdrop-blur-md border-l border-line shadow-[-8px_0_24px_-8px_rgba(22,36,30,0.35)] overflow-y-auto z-[500] rounded-r-xl transition-transform duration-300 ease-in-out ${
                 isPanelOpen ? "translate-x-0" : "translate-x-full pointer-events-none"
               }`}
             >
@@ -173,39 +171,14 @@ export default function Home() {
               <div
                 className="absolute bottom-0 right-0 w-[560px] max-w-[92%] h-10 pointer-events-none z-[501] rounded-br-xl"
                 style={{
-                  background: "linear-gradient(to top, rgba(243,248,245,0.55), rgba(243,248,245,0))",
+                  // Matches the panel's own white, not the page background —
+                  // this fade sits on top of the panel, not beside it.
+                  background: "linear-gradient(to top, rgba(255,255,255,0.9), rgba(255,255,255,0))",
                 }}
               />
             )}
           </div>
 
-          <div className="mt-3 px-3 py-2.5">
-            <div className="mb-2">
-              <span className="font-display text-[12px] font-semibold text-ink">
-                AETHER Priority Ranking
-              </span>
-              <span className="font-mono text-[10.5px] text-faint ml-2">
-                by predicted mangrove area loss, ranked within each municipality
-              </span>
-            </div>
-            <div className="flex items-center gap-5 flex-wrap font-mono text-[11px] text-muted">
-              {LEGEND_ITEMS.map((item) => (
-                <span key={item.label} className="inline-flex items-center gap-1.5">
-                  <span className={`w-2.5 h-2.5 rounded-full inline-block ${item.colorClass}`} />
-                  {item.label}
-                </span>
-              ))}
-              <span className="inline-flex items-center gap-1.5 ml-auto">
-                <span
-                  className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full border border-risk-high text-risk-high text-[10px] font-bold"
-                  style={{ background: "rgba(255,255,255,0.15)" }}
-                >
-                  N
-                </span>
-                <span className="text-faint">= high-risk zones in that cluster</span>
-              </span>
-            </div>
-          </div>
         </div>
       </section>
 
