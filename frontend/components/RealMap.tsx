@@ -5,8 +5,8 @@ import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 import { useEffect, useRef } from "react";
 import L from "leaflet";
-import { MapContainer, TileLayer, Marker, useMap } from "react-leaflet";
-import MarkerClusterGroup from "react-leaflet-cluster";
+import "leaflet.markercluster";
+import { MapContainer, TileLayer, useMap } from "react-leaflet";
 
 import type { ZoneSummary } from "@/lib/types";
 import { RISK_COLOR } from "@/lib/colors";
@@ -150,7 +150,7 @@ function GlowStyles() {
 }
 
 // Typed loosely (not as a strict custom shape) because
-// react-leaflet-cluster's iconCreateFunction prop expects the real
+// markerClusterGroup's iconCreateFunction option expects the real
 // Leaflet MarkerCluster type, which has many more methods than just
 // getChildCount/getAllChildMarkers — a narrower custom type caused a
 // structural mismatch TypeScript error on that prop.
@@ -256,44 +256,85 @@ function pinIcon(color: string, selected: boolean): L.DivIcon {
   });
 }
 
-function ZoneMarker({
-  z,
-  isSelected,
+// Builds the marker-cluster layer imperatively with Leaflet's own API
+// (rather than react-leaflet-cluster's JSX <MarkerClusterGroup>), since
+// react-leaflet-cluster is not compatible with react-leaflet v5 / React
+// 19's context internals — its useLeafletContext() call throws "No
+// context provided" even when nested correctly under <MapContainer>.
+function ZoneMarkersLayer({
+  zones,
+  selectedZoneId,
   onSelect,
   markersRef,
+  clusterGroupRef,
 }: {
-  z: ZoneSummary;
-  isSelected: boolean;
-  onSelect: (id: string | null) => void;
+  zones: ZoneSummary[];
+  selectedZoneId: string | null;
+  onSelect: (zoneId: string | null) => void;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   markersRef: React.MutableRefObject<Map<string, any>>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  clusterGroupRef: React.MutableRefObject<any>;
 }) {
   const map = useMap();
+  const selectedZoneIdRef = useRef(selectedZoneId);
 
-  function handleClick() {
-    if (isSelected) {
-      onSelect(null);
-      return;
-    }
-    onSelect(z.zone_id);
-    focusZone(map, z.lat, z.lon);
-  }
+  useEffect(() => {
+    selectedZoneIdRef.current = selectedZoneId;
+  }, [selectedZoneId]);
 
-  return (
-    <Marker
-      ref={(instance) => {
-        if (instance) {
-          (instance.options as L.MarkerOptions & { zoneRisk?: string }).zoneRisk = z.risk_class;
-          markersRef.current.set(z.zone_id, instance);
+  useEffect(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const clusterGroup = (L as any).markerClusterGroup({
+      iconCreateFunction: clusterIcon,
+      maxClusterRadius: 50,
+      spiderfyOnMaxZoom: false,
+      showCoverageOnHover: false,
+      disableClusteringAtZoom: 15,
+    });
+    clusterGroupRef.current = clusterGroup;
+
+    zones.forEach((z) => {
+      const marker = L.marker([z.lat, z.lon], {
+        icon: pinIcon(RISK_COLOR[z.risk_class], z.zone_id === selectedZoneIdRef.current),
+      });
+      (marker.options as L.MarkerOptions & { zoneRisk?: string }).zoneRisk = z.risk_class;
+
+      marker.on("click", () => {
+        if (selectedZoneIdRef.current === z.zone_id) {
+          onSelect(null);
         } else {
-          markersRef.current.delete(z.zone_id);
+          onSelect(z.zone_id);
+          focusZone(map, z.lat, z.lon);
         }
-      }}
-      position={[z.lat, z.lon]}
-      icon={pinIcon(RISK_COLOR[z.risk_class], isSelected)}
-      eventHandlers={{ click: handleClick }}
-    />
-  );
+      });
+
+      clusterGroup.addLayer(marker);
+      markersRef.current.set(z.zone_id, marker);
+    });
+
+    map.addLayer(clusterGroup);
+
+    return () => {
+      map.removeLayer(clusterGroup);
+      markersRef.current.clear();
+      clusterGroupRef.current = null;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [zones, map]);
+
+  // Update marker icons (selected glow) whenever selection changes,
+  // without rebuilding the whole cluster layer.
+  useEffect(() => {
+    markersRef.current.forEach((marker, zoneId) => {
+      const z = zones.find((zz) => zz.zone_id === zoneId);
+      if (!z) return;
+      marker.setIcon(pinIcon(RISK_COLOR[z.risk_class], zoneId === selectedZoneId));
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedZoneId, zones]);
+
+  return null;
 }
 
 export default function RealMap({
@@ -334,27 +375,13 @@ export default function RealMap({
           markersRef={markersRef}
           clusterGroupRef={clusterGroupRef}
         />
-        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-        <MarkerClusterGroup
-          ref={(instance: any) => {
-            clusterGroupRef.current = instance;
-          }}
-          iconCreateFunction={clusterIcon}
-          maxClusterRadius={50}
-          spiderfyOnMaxZoom={false}
-          showCoverageOnHover={false}
-          disableClusteringAtZoom={15}
-        >
-          {zones.map((z) => (
-            <ZoneMarker
-              key={z.zone_id}
-              z={z}
-              isSelected={z.zone_id === selectedZoneId}
-              onSelect={onSelect}
-              markersRef={markersRef}
-            />
-          ))}
-        </MarkerClusterGroup>
+        <ZoneMarkersLayer
+          zones={zones}
+          selectedZoneId={selectedZoneId}
+          onSelect={onSelect}
+          markersRef={markersRef}
+          clusterGroupRef={clusterGroupRef}
+        />
       </MapContainer>
     </div>
   );
