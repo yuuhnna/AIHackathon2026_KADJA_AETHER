@@ -90,16 +90,18 @@ export default function ExplainabilityPage() {
           <div className="mt-5 grid grid-cols-1 lg:grid-cols-2 gap-5">
             <div className="bg-bg-panel border border-line rounded-2xl shadow-[0_2px_8px_-2px_rgba(22,36,30,0.08),0_1px_2px_rgba(22,36,30,0.04)] overflow-hidden">
               {metrics ? (
-                <div className="flex flex-wrap items-stretch divide-x divide-line">
+                // Grid layout so items reflow cleanly at any zoom level
+                // while the card itself stays the same width.
+                <div className="grid grid-cols-5 divide-x divide-line">
                   {metaItems.map((item) => (
-                    <div key={item.label} className="px-6 py-4">
-                      <div className="text-[10.5px] uppercase tracking-[0.18em] text-faint font-semibold mb-1">
+                    <div key={item.label} className="px-5 py-4 min-w-0">
+                      <div className="text-[10.5px] uppercase tracking-[0.18em] text-faint font-semibold mb-1 break-words">
                         {item.label}
                       </div>
-                      <div className="text-[17px] font-bold text-ink leading-tight">
+                      <div className="text-[15px] font-bold text-ink leading-tight truncate">
                         {item.value}
                       </div>
-                      <div className={`text-[12px] mt-0.5 ${item.subClass}`}>
+                      <div className={`text-[11.5px] mt-0.5 truncate ${item.subClass}`}>
                         {item.sub}
                       </div>
                     </div>
@@ -107,9 +109,9 @@ export default function ExplainabilityPage() {
                 </div>
               ) : (
                 // Skeleton while metrics are loading
-                <div className="flex flex-wrap items-stretch divide-x divide-line animate-pulse">
+                <div className="grid grid-cols-5 divide-x divide-line animate-pulse">
                   {[1, 2, 3, 4, 5].map((i) => (
-                    <div key={i} className="px-6 py-4">
+                    <div key={i} className="px-5 py-4">
                       <div className="h-2.5 w-16 bg-line rounded mb-2" />
                       <div className="h-5 w-20 bg-line rounded mb-1.5" />
                       <div className="h-2 w-12 bg-line rounded" />
