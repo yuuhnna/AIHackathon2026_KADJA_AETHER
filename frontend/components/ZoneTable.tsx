@@ -382,13 +382,12 @@ export default function ZoneTable({
       <div className="max-h-[420px] overflow-y-auto overflow-x-auto rounded-lg border border-line-soft">
         <table className="w-full border-collapse text-[12.5px] table-fixed min-w-[920px]">
           <colgroup>
+            <col className="w-[13%]" />
+            <col className="w-[15%]" />
+            <col className="w-[14%]" />
             <col className="w-[11%]" />
-            <col className="w-[13%]" />
-            <col className="w-[13%]" />
-            <col className="w-[9%]" />
-            <col className="w-[22%]" />
-            <col className="w-[10%]" />
-            <col className="w-[13%]" />
+            <col className="w-[32%]" />
+            <col className="w-[15%]" />
           </colgroup>
           <thead className="bg-bg-panel-alt sticky top-0 z-10">
             <tr>
@@ -406,9 +405,6 @@ export default function ZoneTable({
               </th>
               <th className="text-left text-[10.5px] uppercase tracking-wider text-faint px-3 py-2.5 border-b border-line">
                 Top Contributing Factor
-              </th>
-              <th className="text-center text-[10.5px] uppercase tracking-wider text-faint px-3 py-2.5 border-b border-line">
-                Confidence
               </th>
               <th className="text-center text-[10.5px] uppercase tracking-wider text-faint px-3 py-2.5 border-b border-line">
                 Rehab. Status
@@ -471,19 +467,6 @@ export default function ZoneTable({
                   </td>
                   <td className="px-2 py-2.5 border-b border-line-soft">
                     <div className="flex justify-center">
-                      {z.confidence_flag === "ok" ? (
-                        <span className="inline-flex items-center gap-1 font-mono text-[11px] text-risk-low">
-                          <CheckIcon /> Ok
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 font-mono text-[11px] text-risk-moderate">
-                          <AlertIcon /> Low
-                        </span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-2 py-2.5 border-b border-line-soft">
-                    <div className="flex justify-center">
                       <span
                         className={`inline-block px-2 py-0.5 rounded-sm font-mono text-[10px] whitespace-nowrap ${
                           REHAB_STATUS_PILL_CLASS[effectiveStatus.get(z.zone_id) ?? "None"] ??
@@ -500,7 +483,7 @@ export default function ZoneTable({
 
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={7} className="text-center py-8 text-faint font-mono text-[12px]">
+                <td colSpan={6} className="text-center py-8 text-faint font-mono text-[12px]">
                   No zones match your filters.
                 </td>
               </tr>
