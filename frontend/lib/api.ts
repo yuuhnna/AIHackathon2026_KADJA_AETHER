@@ -25,9 +25,14 @@ export function fetchModelMetrics(): Promise<ModelMetrics> {
   return getJSON<ModelMetrics>("/model-metrics");
 }
 
-// Shape actually returned by /zones today. risk_class and confidence_flag
-// are optional here since older backend builds (before that logic was
-// added to zone_service.py) won't include them yet.
+interface BackendContributingFactor {
+  feature: string;
+  label: string;
+  shap_value: number;
+  direction: "increases" | "decreases";
+}
+
+// Shape actually returned by /zones today.
 interface BackendZoneSummary {
   zone_id: string;
   lat: number;
@@ -37,12 +42,9 @@ interface BackendZoneSummary {
   expected_area_loss: number;
   risk_class?: "low" | "moderate" | "high";
   confidence_flag?: string;
+  top_factors?: BackendContributingFactor[];
 }
 
-// The backend doesn't yet provide top_factors, recommendations, or
-// rehabilitation_status — this fills them with safe defaults so
-// DetailPanel and ZoneTable don't crash reading undefined fields, until
-// those are added backend-side.
 function toFrontendZone(z: BackendZoneSummary): ZoneSummary {
   return {
     zone_id: z.zone_id,
@@ -53,7 +55,10 @@ function toFrontendZone(z: BackendZoneSummary): ZoneSummary {
     expected_area_loss: z.expected_area_loss,
     risk_class: z.risk_class ?? "low",
     confidence_flag: z.confidence_flag ?? "ok",
-    top_factors: [],
+    top_factors: (z.top_factors ?? []).map((f) => ({
+      label: f.label,
+      value: f.shap_value,
+    })),
     recommendations: [],
     rehabilitation_status: "None",
   };
@@ -85,13 +90,6 @@ export async function fetchSummary(): Promise<SummaryStats> {
 // with real SHAP-derived contributing factors and rule-based
 // recommendations (both only computed per-zone, not in bulk, since
 // running SHAP across all 1,332 zones at once was too expensive).
-interface BackendContributingFactor {
-  feature: string;
-  label: string;
-  shap_value: number;
-  direction: "increases" | "decreases";
-}
-
 interface BackendZoneDetail extends BackendZoneSummary {
   raw_features: Record<string, number | null>;
   top_factors: BackendContributingFactor[];

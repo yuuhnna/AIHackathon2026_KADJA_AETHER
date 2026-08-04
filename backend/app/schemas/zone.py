@@ -37,6 +37,8 @@ class ZoneSummary(BaseModel):
     expected_area_loss: float
     risk_class: str
     confidence_flag: str
+    top_factors: list[TopFactor] = []
+    rehabilitation_status: str = "None"
 
 
 class ZoneDetail(BaseModel):

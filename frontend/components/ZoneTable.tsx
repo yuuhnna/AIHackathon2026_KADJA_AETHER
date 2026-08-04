@@ -148,9 +148,7 @@ export default function ZoneTable({
       return true;
     });
     // Default sort: highest predicted area loss first — most at-risk
-    // zones surface at the top without needing manual sorting. Uses
-    // expected_area_loss to stay consistent with the figure shown in the
-    // zone-detail panel and map popup.
+    // zones surface at the top without needing manual sorting.
     result = [...result].sort((a, b) => b.expected_area_loss - a.expected_area_loss);
     return result;
   }, [safeZones, riskFilter, municipalityFilter, statusFilter, search, effectiveStatus]);

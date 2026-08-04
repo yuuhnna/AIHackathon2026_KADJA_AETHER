@@ -5,7 +5,7 @@ Handles monitored zone assessment using the
 trained AI model.
 """
 
-from app.config import FEATURE_COLUMNS, LOW_ELEVATION_CONFIDENCE_THRESHOLD_M
+from app.config import FEATURE_COLUMNS, LOW_ELEVATION_CONFIDENCE_THRESHOLD_M, FEATURE_LABELS
 from app.schemas.zone import (
     ZoneSummary,
     ZoneDetail
@@ -79,7 +79,9 @@ class ZoneService:
         self
     ) -> list[ZoneSummary]:
         """
-        Returns all monitored zones with predictions.
+        Returns all monitored zones with predictions and per-zone
+        SHAP-based top_factors — computed in one batch so the table
+        matches the zone assessment detail panel exactly.
         """
 
         if self._zone_summaries_cache is not None:
@@ -89,29 +91,35 @@ class ZoneService:
 
         X = pd.DataFrame(
             [
-                {
-                    feature: zone[feature]
-                    for feature in FEATURE_COLUMNS
-                }
+                {feature: zone[feature] for feature in FEATURE_COLUMNS}
                 for zone in zones
             ]
         )
 
         predictions = self.model_service.predict_batch(X)
 
-        # Attach predictions to a DataFrame so we can rank vulnerability
-        # within each municipality group.
+        # Rank vulnerability within each municipality.
         df = pd.DataFrame(zones)
         df["vulnerability_score"] = predictions
         df["rank_pct"] = df.groupby("municipality")["vulnerability_score"].rank(
             pct=True, ascending=True
         )
 
+        # Batch SHAP — one call for all zones, same explainer used by
+        # get_zone(), so top_factors matches the detail panel exactly.
+        shap_matrix = self.model_service.explainer.shap_values(X)
+
         summaries = []
 
         for i, zone in enumerate(zones):
             prediction = predictions[i]
             rank_pct = df.iloc[i]["rank_pct"]
+
+            # Use the same _top_factors logic as the single-zone predict()
+            top_factors = self.model_service._top_factors(
+                shap_matrix[i],
+                top_n=3
+            )
 
             summaries.append(
                 ZoneSummary(
@@ -126,6 +134,7 @@ class ZoneService:
                     ),
                     risk_class=self._classify_risk(rank_pct),
                     confidence_flag=self._confidence_flag(zone),
+                    top_factors=top_factors,
                 )
             )
 

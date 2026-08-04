@@ -104,7 +104,7 @@ export default function Home() {
   }, [summary, activeRehabCount]);
 
   return (
-    <main className="flex flex-1 flex-col px-6 pt-2 pb-8 gap-5">
+    <main className="flex flex-1 flex-col px-6 pt-2 pb-8 gap-5 max-w-[1800px] mx-auto w-full">
       {liveSummary && <KpiRow summary={liveSummary} />}
 
       {error && (
