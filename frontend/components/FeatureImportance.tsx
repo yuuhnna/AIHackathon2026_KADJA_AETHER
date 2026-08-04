@@ -15,7 +15,7 @@ export default function FeatureImportance({ items }: { items: FeatureImportanceI
         return (
           <div
             key={item.feature}
-            className="group relative flex items-center gap-2.5 text-xs py-1.5 -mx-1.5 px-1.5 rounded-sm cursor-help hover:bg-bg-panel-alt transition-colors"
+            className="group relative flex items-center gap-2.5 text-xs py-1 -mx-1.5 px-1.5 rounded-sm cursor-help hover:bg-bg-panel-alt transition-colors"
           >
             <div className="w-[190px] shrink-0 text-muted truncate">{item.label}</div>
             <div className="flex-1 h-2 bg-ink/10 border border-line rounded-full overflow-hidden">
