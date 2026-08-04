@@ -17,11 +17,11 @@ async function getJSON<T>(path: string): Promise<T> {
 }
 
 export function fetchFeatureImportance(): Promise<FeatureImportanceItem[]> {
-  return getJSON<FeatureImportanceItem[]>("/api/feature-importance");
+  return getJSON<FeatureImportanceItem[]>("/feature-importance");
 }
 
 export function fetchModelMetrics(): Promise<ModelMetrics> {
-  return getJSON<ModelMetrics>("/api/model-metrics");
+  return getJSON<ModelMetrics>("/model-metrics");
 }
 
 // Shape actually returned by /zones today. risk_class and confidence_flag
@@ -117,8 +117,16 @@ export async function fetchZoneDetail(zoneId: string): Promise<ZoneSummary> {
   return toFrontendZoneDetail(data);
 }
 
+interface BackendErrorByRangeItem {
+  range: string;
+  sample_size: number;
+  mae: number;
+  error_min: number;
+  error_max: number;
+}
+
 export async function fetchErrorBySeverity(): Promise<ErrorByRangeItem[]> {
-  const data = await getJSON<any[]>("/error-by-severity");
+  const data = await getJSON<BackendErrorByRangeItem[]>("/error-by-severity");
   return data.map((item) => ({
     range: item.range,
     sampleSize: item.sample_size,
