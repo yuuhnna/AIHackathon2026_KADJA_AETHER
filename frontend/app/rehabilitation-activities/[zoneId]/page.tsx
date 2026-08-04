@@ -132,7 +132,7 @@ export default function RehabilitationAreaPage() {
                 Predicted Mangrove Area Loss
               </div>
               <div className="font-display text-[28px] font-semibold">
-                {zone.expected_area_loss.toFixed(2)}%
+                {zone.vulnerability_score.toFixed(2)}%
               </div>
             </div>
           </div>

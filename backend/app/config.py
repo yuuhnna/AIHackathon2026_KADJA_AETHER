@@ -52,6 +52,20 @@ FEATURE_LABELS = {
     "nearest_river_distance_m": "Proximity to rivers",
 }
 
-RISK_THRESHOLDS = {"low": 35, "moderate": 55}  # above moderate => High. Values are on a 0-100 percentage scale — next_year_change_pct (and vulnerability_score) is already a percentage, not a 0-1 fraction.
+# Absolute cutoffs on a zone's predicted area loss for next year:
+#
+#   below 5%   -> Low
+#   5% to 10%  -> Moderate
+#   above 10%  -> High
+#
+# Values are on a 0-100 percentage scale — next_year_change_pct (and so
+# vulnerability_score) is already a percentage, not a 0-1 fraction. A
+# zone landing exactly on a cutoff counts as the lower band, so the
+# Moderate range is inclusive at both ends.
+#
+# These are fixed thresholds, not a ranking: a zone's class depends only
+# on its own prediction, so it does not change when neighbouring zones
+# are added, removed or filtered.
+RISK_THRESHOLDS = {"moderate": 5.0, "high": 10.0}
 
 LOW_ELEVATION_CONFIDENCE_THRESHOLD_M = 2.0

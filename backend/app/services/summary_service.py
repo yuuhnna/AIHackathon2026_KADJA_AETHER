@@ -40,12 +40,12 @@ class SummaryService:
         # scores (not a DataFrame) — see model_service.py.
         predictions = self.model_service.predict_batch(X)
 
-        highest_prediction = max(predictions)
-
-        # Convert vulnerability_score to expected_area_loss (same as the
-        # table) so the KPI card and zone table show consistent numbers.
-        # expected_area_loss = vulnerability_score / 100 * ZONE_AREA_HA
-        highest_area_loss = round(float(highest_prediction) / 100 * ZONE_AREA_HA, 2)
+        # The field is a percentage, so it reports the prediction itself.
+        # It previously converted to expected_area_loss (hectares) while
+        # still being named and rendered as a percent, which put the KPI
+        # on a different scale from the zone table's AREA LOSS column and
+        # from the thresholds that decide a zone's risk band.
+        highest_area_loss = round(float(max(predictions)), 2)
 
         return SummaryResponse(
             total_mangrove_zones=total_zones,

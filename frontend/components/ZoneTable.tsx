@@ -158,8 +158,10 @@ export default function ZoneTable({
       return true;
     });
     // Default sort: highest predicted area loss first — most at-risk
-    // zones surface at the top without needing manual sorting.
-    result = [...result].sort((a, b) => b.expected_area_loss - a.expected_area_loss);
+    // zones surface at the top without needing manual sorting. Sorted on
+    // the same percentage the AREA LOSS column shows and the risk band is
+    // derived from, so the ordering always agrees with both.
+    result = [...result].sort((a, b) => b.vulnerability_score - a.vulnerability_score);
     return result;
   }, [safeZones, riskFilter, municipalityFilter, statusFilter, search, effectiveStatus]);
 
@@ -190,7 +192,7 @@ export default function ZoneTable({
       municipality: z.municipality ?? "",
       lat: z.lat,
       lon: z.lon,
-      area_loss_pct: z.expected_area_loss.toFixed(2),
+      area_loss_pct: z.vulnerability_score.toFixed(2),
       risk_class: z.risk_class,
       confidence_flag: z.confidence_flag,
       rehabilitation_status: effectiveStatus.get(z.zone_id) ?? "None",
@@ -235,11 +237,13 @@ export default function ZoneTable({
                 {showRiskInfo && (
                   <span className="absolute left-0 top-5 z-20 w-72 rounded-md border border-line bg-bg-panel px-3 py-2.5 text-[11px] normal-case tracking-normal font-normal text-muted leading-relaxed shadow-lg text-left">
                     <span className="block font-semibold text-ink mb-1">How risk is calculated</span>
-                    Risk is ranked within each municipality — the top 10% most
-                    vulnerable zones locally are High risk. This is a
-                    configurable proportional cutoff, not a fixed DENR
-                    threshold; DENR does not apply a province-wide
-                    vulnerability cutoff.
+                    Risk comes from the area loss predicted for a zone next
+                    year, as a percentage of that zone&apos;s own area: below
+                    5% is Low, 5-10% is Moderate, above 10% is High. These are
+                    fixed cutoffs, so a zone&apos;s class depends only on its
+                    own prediction and never changes because of its
+                    neighbours. They are a project setting, not a published
+                    DENR threshold.
                   </span>
                 )}
               </button>
@@ -248,9 +252,9 @@ export default function ZoneTable({
               {(
                 [
                   { value: "all", label: "ALL" },
-                  { value: "High", label: "TOP 10%" },
-                  { value: "Moderate", label: "NEXT 20%" },
-                  { value: "Low", label: "REMAINING 70%" },
+                  { value: "High", label: "HIGH >10%" },
+                  { value: "Moderate", label: "MODERATE 5-10%" },
+                  { value: "Low", label: "LOW <5%" },
                 ] as const
               ).map(({ value, label }) => (
                 <button
@@ -448,8 +452,13 @@ export default function ZoneTable({
                   <td className="px-4 pl-12 py-2.5 border-b border-line-soft text-ink truncate" title={z.municipality}>
                     {z.municipality ?? "—"}
                   </td>
+                  {/* The percentage the risk band is derived from.
+                      expected_area_loss is a hectare figure and was being
+                      printed here with a % sign, so a zone could show
+                      "1.65%" while being classed High for a predicted 18%
+                      loss. */}
                   <td className="font-mono px-4 py-2.5 border-b border-line-soft text-center">
-                    {z.expected_area_loss.toFixed(2)}%
+                    {z.vulnerability_score.toFixed(2)}%
                   </td>
                   <td className="px-2 py-2.5 border-b border-line-soft">
                     <div className="flex justify-center">

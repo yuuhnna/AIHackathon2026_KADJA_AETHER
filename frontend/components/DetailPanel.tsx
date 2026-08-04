@@ -69,11 +69,15 @@ export default function DetailPanel({ zone }: { zone: ZoneSummary | null }) {
     <div>
       <section>
         <SectionLabel>Predicted mangrove area loss</SectionLabel>
+        {/* The predicted percentage itself — the number the risk band is
+            derived from. expected_area_loss is a hectare figure and was
+            being printed here with a % sign. */}
         <div className={`font-display text-[44px] font-bold leading-none ${textColorClass}`}>
-          {zone.expected_area_loss.toFixed(2)}%
+          {zone.vulnerability_score.toFixed(2)}%
         </div>
         <p className="text-[10.5px] text-faint mt-1.5">
-          <span className={textColorClass}>{RISK_LABEL[zone.risk_class]}</span> among monitored zones in {zone.municipality}
+          <span className={textColorClass}>{RISK_LABEL[zone.risk_class]}</span> predicted loss next year
+          {zone.municipality ? ` · ${zone.municipality}` : ""}
         </p>
       </section>
 

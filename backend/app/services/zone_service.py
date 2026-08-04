@@ -5,7 +5,12 @@ Handles monitored zone assessment using the
 trained AI model.
 """
 
-from app.config import FEATURE_COLUMNS, LOW_ELEVATION_CONFIDENCE_THRESHOLD_M, FEATURE_LABELS
+from app.config import (
+    FEATURE_COLUMNS,
+    LOW_ELEVATION_CONFIDENCE_THRESHOLD_M,
+    FEATURE_LABELS,
+    RISK_THRESHOLDS
+)
 from app.schemas.zone import (
     ZoneSummary,
     ZoneDetail,
@@ -27,13 +32,13 @@ import math
 
 ZONE_AREA_HA = 9.0
 
-# Risk classification is ranked WITHIN each municipality (not against a
-# fixed province-wide cutoff) — DENR does not publish an official
-# vulnerability threshold, so the most defensible approach is relative
-# ranking: the most vulnerable zones in each locality stand out as
-# "High" regardless of that municipality's overall baseline.
-RISK_HIGH_PERCENTILE = 0.90   # top 10%
-RISK_MODERATE_PERCENTILE = 0.70  # next 20% (0.70-0.90)
+# Risk classification uses fixed cutoffs on a zone's own predicted area
+# loss — see RISK_THRESHOLDS in app.config for the bands themselves.
+#
+# This replaced a within-municipality percentile ranking. Ranking always
+# produced a top 10% no matter how healthy the province was, and a zone
+# could change class purely because its neighbours did — which made
+# "High risk" mean "worst locally" rather than "losing a lot of area".
 
 
 class ZoneService:
@@ -48,20 +53,22 @@ class ZoneService:
             get_recommendation_service()
         )
         # The feature table is loaded once and never mutated at runtime,
-        # so the bulk risk-class ranking is safe to compute once and
+        # so the bulk predictions are safe to compute once and
         # reuse — both for get_all_zones() itself and so get_zone() can
         # look up a single zone's risk_class without rerunning
         # predict_batch over every monitored zone on every detail click.
         self._zone_summaries_cache: list[ZoneSummary] | None = None
 
-    def _classify_risk(self, rank_pct: float) -> str:
+    def _classify_risk(self, predicted_loss_pct: float) -> str:
         """
-        Classifies a zone's risk level from its percentile rank
-        (0-1) of vulnerability_score within its own municipality.
+        Classifies a zone from the area loss predicted for it next year,
+        as a percentage of the zone's own area.
+
+        Low below 5%, Moderate from 5% through 10%, High above 10%.
         """
-        if rank_pct >= RISK_HIGH_PERCENTILE:
+        if predicted_loss_pct > RISK_THRESHOLDS["high"]:
             return "high"
-        if rank_pct >= RISK_MODERATE_PERCENTILE:
+        if predicted_loss_pct >= RISK_THRESHOLDS["moderate"]:
             return "moderate"
         return "low"
 
@@ -101,13 +108,6 @@ class ZoneService:
 
         predictions = self.model_service.predict_batch(X)
 
-        # Rank vulnerability within each municipality.
-        df = pd.DataFrame(zones)
-        df["vulnerability_score"] = predictions
-        df["rank_pct"] = df.groupby("municipality")["vulnerability_score"].rank(
-            pct=True, ascending=True
-        )
-
         # Batch SHAP — one call for all zones, same explainer used by
         # get_zone(), so top_factors matches the detail panel exactly.
         shap_matrix = self.model_service.explainer.shap_values(X)
@@ -116,7 +116,6 @@ class ZoneService:
 
         for i, zone in enumerate(zones):
             prediction = predictions[i]
-            rank_pct = df.iloc[i]["rank_pct"]
 
             # Use the same _top_factors logic as the single-zone predict()
             top_factors = self.model_service._top_factors(
@@ -135,7 +134,7 @@ class ZoneService:
                         prediction / 100 * ZONE_AREA_HA,
                         2
                     ),
-                    risk_class=self._classify_risk(rank_pct),
+                    risk_class=self._classify_risk(prediction),
                     confidence_flag=self._confidence_flag(zone),
                     top_factors=top_factors,
                 )
@@ -148,9 +147,9 @@ class ZoneService:
     def get_zones_geojson(self) -> ZoneGeoCollection:
         """
         Returns every zone's real footprint as a GeoJSON
-        FeatureCollection, carrying the same municipality-relative
-        risk_class the table and detail panel use — so the map colours a
-        shape exactly the way the rest of the dashboard ranks it.
+        FeatureCollection, carrying the same risk_class the table and
+        detail panel use — so the map colours a shape exactly the way the
+        rest of the dashboard classifies it.
 
         Zones whose geometry failed to parse are omitted; they still
         appear everywhere else in the app.
@@ -177,8 +176,8 @@ class ZoneService:
 
     def _get_risk_class(self, zone_id: str) -> str:
         """
-        A single zone's risk_class, from the same municipality-relative
-        ranking used by get_all_zones() — so the Dashboard's zone list
+        A single zone's risk_class, from the same cached predictions
+        used by get_all_zones() — so the Dashboard's zone list
         and the zone detail panel never disagree on a zone's risk.
         """
         for summary in self.get_all_zones():
