@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { fetchFeatureImportance, fetchModelMetrics } from "@/lib/api";
-import type { FeatureImportanceItem, ModelMetrics } from "@/lib/types";
+import { fetchFeatureImportance, fetchModelMetrics, fetchErrorBySeverity } from "@/lib/api";
+import type { FeatureImportanceItem, ModelMetrics, ErrorByRangeItem } from "@/lib/types";
 import FeatureImportance from "@/components/FeatureImportance";
+import ErrorByRange from "@/components/ErrorByRange";
 import { ChartBarIcon, InfoIcon, TargetIcon, CheckCircleIcon, WarningIcon } from "@/components/icons";
 
 const PLACEHOLDER_METRICS: ModelMetrics = {
@@ -83,13 +84,14 @@ export default function ExplainabilityPage() {
   const [metrics, setMetrics] = useState<ModelMetrics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [errorBySeverity, setErrorBySeverity] = useState<ErrorByRangeItem[]>([]);
 
   useEffect(() => {
-    Promise.all([fetchFeatureImportance(), fetchModelMetrics()])
-      .then(([importanceData, metricsData]) => {
+    Promise.all([fetchFeatureImportance(), fetchModelMetrics(), fetchErrorBySeverity(),], )
+      .then(([importanceData, metricsData, severityData]) => {
         setImportance(importanceData);
         setMetrics(metricsData);
-        setLoading(false);
+        setErrorBySeverity(severityData);
       })
       .catch((err) => {
         setError(
@@ -269,6 +271,30 @@ export default function ExplainabilityPage() {
             </div>
           </div>
         )}
+
+        {/* Prediction Error by Severity */}
+        <section className="mt-6">
+          <div className="bg-bg-panel border border-line rounded-2xl shadow-[0_2px_8px_-2px_rgba(22,36,30,0.08),0_1px_2px_rgba(22,36,30,0.04)] overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-3.5 border-b border-line bg-bg-panel-alt">
+              <div>
+                <h2 className="font-display text-sm font-semibold text-ink">
+                  Prediction Error by Severity
+                </h2>
+                <p className="text-[11px] text-muted mt-0.5">
+                  Error distribution grouped by the observed mangrove area loss.
+                </p>
+              </div>
+
+              <span className="font-mono text-[11px] text-faint">
+                Test Dataset
+              </span>
+            </div>
+
+            <div className="p-5">
+              <ErrorByRange items={errorBySeverity} />
+            </div>
+          </div>
+        </section>
 
         <footer className="mt-8 pt-4 border-t border-line text-[11px] text-faint font-mono flex justify-between flex-wrap gap-2">
           <span>

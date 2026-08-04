@@ -2,8 +2,10 @@ import type {
   ZoneSummary,
   SummaryStats,
   FeatureImportanceItem,
-  ModelMetrics
+  ModelMetrics,
+  ErrorByRangeItem
 } from "./types";
+
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -60,4 +62,16 @@ function toFrontendZone(z: BackendZoneSummary): ZoneSummary {
 export async function fetchZones(): Promise<ZoneSummary[]> {
   const data = await getJSON<BackendZoneSummary[]>("/zones");
   return data.map(toFrontendZone);
+}
+ 
+export async function fetchErrorBySeverity(): Promise<ErrorByRangeItem[]> {
+  const data = await getJSON<any[]>("/error-by-severity");
+
+  return data.map((item) => ({
+    range: item.range,
+    sampleSize: item.sample_size,
+    mae: item.mae,
+    errorMin: item.error_min,
+    errorMax: item.error_max,
+  }));
 }

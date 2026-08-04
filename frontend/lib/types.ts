@@ -102,3 +102,11 @@ export interface ModelMetrics {
     version: string;
   };
 }
+
+export interface ErrorByRangeItem {
+  range: string;      
+  sampleSize: number;
+  mae: number;         // mean absolute error within this bin, hectares
+  errorMin: number;    // smallest observed error in this bin
+  errorMax: number;    // largest observed error in this bin
+}

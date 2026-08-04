@@ -7,7 +7,7 @@ zone dataset.
 
 import pandas as pd
 
-from app.config import FEATURE_TABLE_PATH
+from app.config import FEATURE_TABLE_PATH, ERROR_BY_SEVERITY_PATH
 
 
 class DataService:
@@ -44,6 +44,11 @@ class DataService:
             return None
 
         return zone.iloc[0].to_dict()
+
+    def load_error_by_severity(self) -> pd.DataFrame:
+        return pd.read_csv(
+            ERROR_BY_SEVERITY_PATH
+        )
 
 
 # Singleton data service
