@@ -85,6 +85,11 @@ AETHER extracts environmental features at the **Mangrove Management Area (MMA)**
 
 ### 1. Frontend Setup (Next.js)
 
+> **Windows PowerShell note:** If `npm` commands fail with a script execution policy error, run this first in your PowerShell session:
+> ```powershell
+> Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+> ```
+
 ```bash
 # Navigate to frontend directory
 cd frontend
@@ -96,7 +101,7 @@ npm install
 npm run dev
 ```
 
-The frontend will start at **`http://localhost:3000`**.
+The frontend will start at **`http://localhost:3000`** (or **`http://localhost:3001`** if port 3000 is already in use).
 
 ---
 
@@ -120,6 +125,12 @@ pip install -r requirements.txt
 # Start the FastAPI server
 uvicorn main:app --reload --port 8000
 ```
+
+> **Windows PowerShell note:** If you see a script execution policy error when running `npm` or activating the venv, run this first in your PowerShell session:
+> ```powershell
+> Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+> ```
+> This only applies to the current terminal session and resets when you close it.
 
 The backend API will run at **`http://localhost:8000`** (Interactive OpenAPI docs available at `http://localhost:8000/docs`).
 
@@ -150,7 +161,7 @@ To enable rehabilitation tracking and zone assessment recording:
 
 1. Create a project in [Supabase](https://supabase.com/).
 2. Open the **SQL Editor** in Supabase.
-3. Run the SQL statements from [`supabase/schema.sql`](file:///c:/Users/Nikki%20Dorado/OneDrive/Documents/GitHub/AIHackathon2026_KADJA_AETHER/supabase/schema.sql).
+3. Run the SQL statements from [`supabase/schema.sql`].
 4. Configure environment variables in `frontend/.env.local`:
    ```env
    NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
