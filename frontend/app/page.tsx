@@ -16,12 +16,6 @@ import type { SummaryStats, ZoneSummary } from "@/lib/types";
 
 const RealMap = dynamic(() => import("@/components/RealMap"), { ssr: false });
 
-const LEGEND_ITEMS = [
-  { label: "Top 10%", colorClass: "bg-risk-high" },
-  { label: "Next 20%", colorClass: "bg-risk-moderate" },
-  { label: "Remaining 70%", colorClass: "bg-risk-low" },
-] as const;
-
 export default function Home() {
   const [zones, setZones] = useState<ZoneSummary[]>([]);
   const [summary, setSummary] = useState<SummaryStats | null>(null);
@@ -179,38 +173,6 @@ export default function Home() {
             )}
           </div>
 
-          <div className="mt-3 px-3 py-2.5">
-            <div className="mb-2">
-              <span className="font-display text-[12px] font-semibold text-ink">
-                AETHER Priority Ranking
-              </span>
-              <span className="font-mono text-[10.5px] text-faint ml-2">
-                by predicted mangrove area loss, ranked within each municipality
-              </span>
-            </div>
-            <div className="flex items-center gap-5 flex-wrap font-mono text-[11px] text-muted">
-              {LEGEND_ITEMS.map((item) => (
-                <span key={item.label} className="inline-flex items-center gap-1.5">
-                  <span className={`w-2.5 h-2.5 rounded-full inline-block ${item.colorClass}`} />
-                  {item.label}
-                </span>
-              ))}
-              {/* Colour on the map is the tier above; shading depth is
-                  how many zones of that tier sit together. */}
-              <span className="inline-flex items-center gap-1.5 ml-auto">
-                <span
-                  className="inline-block w-[52px] h-[10px] rounded-full border border-line"
-                  style={{
-                    background:
-                      "linear-gradient(90deg, rgba(22,36,30,0.10), rgba(22,36,30,0.70))",
-                  }}
-                />
-                <span className="text-faint">
-                  shading = zone density; zoom in for actual zone footprints
-                </span>
-              </span>
-            </div>
-          </div>
         </div>
       </section>
 

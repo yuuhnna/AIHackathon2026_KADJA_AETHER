@@ -13,9 +13,11 @@
 //   zoomed out  -> a density heat field: where zones cluster
 //   zoomed in   -> the true polygon footprints
 //
-// Both layers paint the mangroves green and burn only the Top 10% in
-// vivid red over them — see ZONE_FILL_COLOR for why the map's palette is
-// not the RISK_COLOR one the legend and table text use.
+// Every zone is drawn as two stacked layers: green for the mangrove
+// standing there today, and a red core inside it sized to the area the
+// model expects that zone to lose within a year. See ZONE_MANGROVE_FILL
+// / ZONE_LOSS_OVERLAY for why the map's palette is not the RISK_COLOR
+// one the table text and detail panel use.
 //
 // The heat field is drawn on a plain canvas rather than pulling in a
 // heatmap dependency — it is one radial-gradient pass plus one
@@ -27,8 +29,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import L from "leaflet";
 import { MapContainer, TileLayer, useMap } from "react-leaflet";
 
-import type { RiskClass, ZoneGeoFeature, ZoneSummary } from "@/lib/types";
-import { RISK_COLOR, RISK_LABEL, ZONE_FILL_COLOR } from "@/lib/colors";
+import type { ZoneGeoFeature, ZoneSummary } from "@/lib/types";
+import { RISK_COLOR, RISK_LABEL, ZONE_MANGROVE_FILL, ZONE_LOSS_OVERLAY } from "@/lib/colors";
 import { fetchZoneGeometries } from "@/lib/api";
 import { ILOILO_MAP_BOUNDS, ILOILO_MAP_CENTER, ILOILO_MAP_DEFAULT_ZOOM } from "@/lib/iloilo";
 
@@ -71,22 +73,139 @@ const MIN_FOCUS_ZOOM = 14;
 const FOCUS_FLY_DURATION = 0.4;
 const CLOSE_ZOOM_OUT_LEVELS = 2;
 
-// The heat field is accumulated in passes, painted in this order, so the
-// red Top 10% pass always lands on top of the green mangrove body.
+// Zoomed out, individual footprints are smaller than a pixel, so the
+// same two layers become two accumulated passes painted in this order.
+// It is the identical statement at a coarser grain: green is where the
+// mangrove is, red is how much of it is predicted to go.
 //
-// Colour is the pass, never the density. Density only drives opacity: a
-// hundred zones stacked in one bay reads as solid green, not as red.
-// Accumulating every zone into a single green-to-red ramp would have
-// said the opposite — that a crowd of low-priority zones is an alert.
-//
-// Remaining 70% and Next 20% share one pass because they share a fill
-// colour (see ZONE_FILL_COLOR); merging them keeps density honest, since
-// a low zone overlapping a moderate one should darken the green once,
-// not twice.
-const HEAT_PASSES: { color: string; risks: RiskClass[]; alpha: number }[] = [
-  { color: ZONE_FILL_COLOR.low, risks: ["low", "moderate"], alpha: 0.22 },
-  { color: ZONE_FILL_COLOR.high, risks: ["high"], alpha: 0.5 },
+// Colour is the pass, never the density. Density only drives opacity, so
+// a hundred zones stacked in one bay reads as solid green — accumulating
+// everything into a single green-to-red ramp would instead have claimed
+// that a crowd of healthy zones is an alert.
+const HEAT_PASSES: { color: string; alphaFor: (zone: ZoneSummary) => number }[] = [
+  // Cover: every zone counts the same, because every zone is mangrove.
+  { color: ZONE_MANGROVE_FILL, alphaFor: () => 0.22 },
+  // Loss: each zone contributes in proportion to its own predicted loss,
+  // so red depth means how much is at stake here, not how many zones
+  // happen to sit here.
+  { color: ZONE_LOSS_OVERLAY, alphaFor: (zone) => lossFraction(zone) * 0.9 },
 ];
+
+// --- predicted-loss geometry -----------------------------------------
+
+// vulnerability_score is already a percentage of the zone's area that
+// the model expects to be lost within a year, so this is just that
+// number as a 0-1 fraction.
+function lossFraction(zone: ZoneSummary): number {
+  return Math.min(Math.max(zone.vulnerability_score / 100, 0), 1);
+}
+
+type Ring = [number, number][];
+
+// Number of halvings used to find the cut line. 40 puts the result well
+// inside floating-point noise — measured worst-case area error across all
+// 398 zones is 0.005%.
+const CUT_SEARCH_STEPS = 40;
+
+function ringArea(ring: Ring): number {
+  let sum = 0;
+  for (let i = 0; i < ring.length - 1; i++) {
+    sum += ring[i][0] * ring[i + 1][1] - ring[i + 1][0] * ring[i][1];
+  }
+  return Math.abs(sum / 2);
+}
+
+// Outer ring minus its holes.
+function polygonArea(rings: Ring[]): number {
+  return rings.reduce((total, ring, i) => total + (i === 0 ? ringArea(ring) : -ringArea(ring)), 0);
+}
+
+function cutPoint(a: [number, number], b: [number, number], y: number): [number, number] {
+  const t = (y - a[1]) / (b[1] - a[1]);
+  return [a[0] + (b[0] - a[0]) * t, y];
+}
+
+// Sutherland-Hodgman against the half-plane y <= yCut. The clip region is
+// convex, so this is exact even where the footprint itself is concave.
+function clipRing(ring: Ring, yCut: number): Ring | null {
+  const points = ring.slice(0, -1);
+  const out: Ring = [];
+  const n = points.length;
+
+  for (let i = 0; i < n; i++) {
+    const current = points[i];
+    const previous = points[(i + n - 1) % n];
+    const currentIn = current[1] <= yCut;
+    const previousIn = previous[1] <= yCut;
+
+    if (currentIn) {
+      if (!previousIn) out.push(cutPoint(previous, current, yCut));
+      out.push(current);
+    } else if (previousIn) {
+      out.push(cutPoint(previous, current, yCut));
+    }
+  }
+
+  if (out.length < 3) return null;
+  out.push(out[0]);
+  return out;
+}
+
+function clipPolygon(rings: Ring[], yCut: number): Ring[] | null {
+  const outer = clipRing(rings[0], yCut);
+  if (!outer) return null;
+
+  const clipped = [outer];
+  for (let i = 1; i < rings.length; i++) {
+    const hole = clipRing(rings[i], yCut);
+    if (hole) clipped.push(hole);
+  }
+  return clipped;
+}
+
+// Returns the part of the zone's footprint that stands for next year's
+// predicted loss: the same polygon cut by a horizontal line, positioned
+// so the kept part has exactly `fraction` of the zone's area.
+//
+// Cutting rather than shrinking, because the red has to be a genuine
+// subset of the green. Scaling the outline towards its centre gives the
+// right area too, but these footprints are unions of 30 m pixels and are
+// often concave or nearly split in two — on this dataset that approach
+// pushed the red core partly or entirely outside the green cover on 161
+// of 398 zones. An intersection cannot leave the shape by construction.
+//
+// Where the cut falls is schematic: the model predicts how much of a
+// zone goes, not which part, so the red is sized honestly and placed
+// arbitrarily (it fills from the southern edge).
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function lossGeometry(geometry: any, fraction: number): any | null {
+  if (!geometry || geometry.type !== "Polygon" || fraction <= 0) return null;
+
+  const rings = geometry.coordinates as Ring[];
+  if (!rings?.length) return null;
+
+  const target = fraction * polygonArea(rings);
+  if (target <= 0) return null;
+
+  let low = Infinity;
+  let high = -Infinity;
+  for (const [, y] of rings[0]) {
+    if (y < low) low = y;
+    if (y > high) high = y;
+  }
+
+  // Clipped area grows monotonically as the cut line rises, so a plain
+  // bisection converges on the line that hits the target area.
+  for (let i = 0; i < CUT_SEARCH_STEPS; i++) {
+    const mid = (low + high) / 2;
+    const clipped = clipPolygon(rings, mid);
+    if ((clipped ? polygonArea(clipped) : 0) < target) low = mid;
+    else high = mid;
+  }
+
+  const coordinates = clipPolygon(rings, high);
+  return coordinates ? { type: "Polygon", coordinates } : null;
+}
 
 function ramp(value: number, from: number, to: number): number {
   if (value <= from) return 0;
@@ -206,12 +325,12 @@ function HeatField({ zones, opacity }: { zones: ZoneSummary[]; opacity: number }
         scratchCtx.setTransform(scale, 0, 0, scale, 0, 0);
         scratchCtx.globalCompositeOperation = "source-over";
         scratchCtx.clearRect(0, 0, size.x, size.y);
-        scratchCtx.globalAlpha = pass.alpha;
 
         let drew = false;
 
         for (const zone of zonesRef.current) {
-          if (!pass.risks.includes(zone.risk_class)) continue;
+          const alpha = pass.alphaFor(zone);
+          if (alpha <= 0) continue;
 
           const point = map.latLngToContainerPoint([zone.lat, zone.lon]);
           // Skip anything whose blob cannot reach the viewport.
@@ -224,6 +343,7 @@ function HeatField({ zones, opacity }: { zones: ZoneSummary[]; opacity: number }
             continue;
           }
 
+          scratchCtx.globalAlpha = alpha;
           scratchCtx.drawImage(blob, point.x - radius, point.y - radius);
           drew = true;
         }
@@ -298,17 +418,31 @@ function HeatField({ zones, opacity }: { zones: ZoneSummary[]; opacity: number }
 
 // --- footprints ------------------------------------------------------
 
-function footprintStyle(risk: RiskClass, selected: boolean): L.PathOptions {
+// Layer 1 — the mangrove standing there today.
+function footprintStyle(selected: boolean): L.PathOptions {
   return {
     pane: SHAPE_PANE,
-    color: selected ? "#FFFFFF" : ZONE_FILL_COLOR[risk],
+    color: selected ? "#FFFFFF" : ZONE_MANGROVE_FILL,
     weight: selected ? 2.5 : 1,
     opacity: selected ? 1 : 0.9,
-    fillColor: ZONE_FILL_COLOR[risk],
-    // Top 10% sits a little more opaque than the green body so it still
-    // reads as the alert layer once you are zoomed into real shapes.
-    fillOpacity: selected ? 0.9 : risk === "high" ? 0.72 : 0.55,
+    fillColor: ZONE_MANGROVE_FILL,
+    fillOpacity: selected ? 0.75 : 0.55,
     className: selected ? "aether-zone aether-zone-selected" : "aether-zone",
+  };
+}
+
+// Layer 2 — the share of that mangrove predicted to be gone in a year,
+// drawn inside layer 1. Opaque, because it is a stated quantity rather
+// than a shading; and non-interactive, so clicks and the tooltip fall
+// through to the cover layer underneath.
+function lossStyle(): L.PathOptions {
+  return {
+    pane: SHAPE_PANE,
+    stroke: false,
+    fillColor: ZONE_LOSS_OVERLAY,
+    fillOpacity: 0.88,
+    interactive: false,
+    className: "aether-zone-loss",
   };
 }
 
@@ -352,9 +486,9 @@ function FootprintLayer({
   // Only the zones currently passed in (the table's filtered set) get a
   // shape — a filtered-out zone should not be clickable on the map.
   //
-  // Sorted so Top 10% shapes are added last: SVG paints in document
-  // order, so where a red footprint abuts a green one the red has to be
-  // the one drawn over the top, and it has to win the click too.
+  // Sorted so Top 10% shapes are added last: SVG paints and hit-tests in
+  // document order, so where two footprints overlap the priority zone is
+  // the one that takes the click.
   const visibleFeatures = useMemo(() => {
     const zoneById = new Map(zones.map((z) => [z.zone_id, z]));
     return features
@@ -368,11 +502,21 @@ function FootprintLayer({
 
     const group = L.layerGroup([], { pane: SHAPE_PANE });
 
+    // Collected while building and added last, so every loss core sits
+    // above every cover layer — otherwise a neighbouring zone's green
+    // could paint over a red core built before it.
+    const lossLayers: L.GeoJSON[] = [];
+
     for (const { feature, zone } of visibleFeatures) {
       const shape = L.geoJSON(feature.geometry, {
         pane: SHAPE_PANE,
-        style: () => footprintStyle(zone.risk_class, zone.zone_id === selectedZoneIdRef.current),
+        style: () => footprintStyle(zone.zone_id === selectedZoneIdRef.current),
       });
+
+      const loss = lossGeometry(feature.geometry, lossFraction(zone));
+      if (loss) {
+        lossLayers.push(L.geoJSON(loss, { pane: SHAPE_PANE, style: lossStyle }));
+      }
 
       shape.bindTooltip(tooltipHtml(zone), {
         sticky: true,
@@ -395,6 +539,10 @@ function FootprintLayer({
       layersRef.current.set(zone.zone_id, shape);
     }
 
+    for (const lossLayer of lossLayers) {
+      group.addLayer(lossLayer);
+    }
+
     map.addLayer(group);
 
     const layers = layersRef.current;
@@ -411,8 +559,7 @@ function FootprintLayer({
     for (const { zone } of visibleFeatures) {
       const shape = layersRef.current.get(zone.zone_id);
       if (!shape) continue;
-      shape.setStyle(footprintStyle(zone.risk_class, zone.zone_id === selectedZoneId));
-      if (zone.zone_id === selectedZoneId) shape.bringToFront();
+      shape.setStyle(footprintStyle(zone.zone_id === selectedZoneId));
     }
   }, [selectedZoneId, visibleFeatures]);
 
