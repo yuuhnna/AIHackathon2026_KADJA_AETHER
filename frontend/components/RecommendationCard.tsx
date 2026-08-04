@@ -331,7 +331,7 @@ export default function RecommendationCard({
 
                 <div>
                   <label htmlFor={`${fieldId}-officer`} className={LABEL_CLASS}>
-                    Officer <span className="normal-case tracking-normal">(optional)</span>
+                    Office in Charge <span className="normal-case tracking-normal">(optional)</span>
                   </label>
                   <input
                     id={`${fieldId}-officer`}
