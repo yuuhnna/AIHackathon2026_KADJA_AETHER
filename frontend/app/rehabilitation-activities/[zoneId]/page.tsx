@@ -7,11 +7,8 @@ import { MOCK_ZONES } from "@/lib/mockZones";
 import { selectZoneActivities, useActivities } from "@/lib/activityStore";
 import { REHAB_STATUS_PILL_CLASS } from "@/lib/colors";
 import { formatIsoDate } from "@/lib/dates";
+import { ZONE_AREA_HA } from "@/lib/types";
 import { ChevronLeftIcon, PersonIcon, CalendarIcon } from "@/components/icons";
-
-// 300m x 300m monitored-zone grid cell — matches the per-zone area figure
-// used in KpiRow's total-area calculation elsewhere in the dashboard.
-const ZONE_AREA_HA = 9.0;
 
 export default function RehabilitationAreaPage() {
   const params = useParams<{ zoneId: string }>();

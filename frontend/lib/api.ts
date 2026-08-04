@@ -98,6 +98,14 @@ interface BackendZoneDetail extends BackendZoneSummary {
 }
 
 function toFrontendZoneDetail(z: BackendZoneDetail): ZoneSummary {
+  // Backend sends null for NaN readings; the frontend type uses undefined
+  // for "not available" instead, so a missing value doesn't crash a driver
+  // lookup expecting a number.
+  const raw_features: Record<string, number | undefined> = {};
+  for (const [key, value] of Object.entries(z.raw_features)) {
+    raw_features[key] = value ?? undefined;
+  }
+
   return {
     ...toFrontendZone(z),
     // Backend's ContributingFactor uses shap_value/feature/direction;
@@ -108,6 +116,7 @@ function toFrontendZoneDetail(z: BackendZoneDetail): ZoneSummary {
       label: f.label,
       value: f.shap_value,
     })),
+    raw_features,
     recommendations: z.recommendations,
   };
 }

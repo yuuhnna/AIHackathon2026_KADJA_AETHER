@@ -37,12 +37,16 @@ class ModelService:
         )
 
 
-    def predict(self, features: dict) -> float:
+    def predict(self, features: dict, risk: str | None = None) -> float:
         """
         Predict next year's mangrove area loss percentage.
 
         Input:
             - Dictionary containing the model features.
+            - risk: this zone's risk_class ("low"/"moderate"/"high"), if
+              already known by the caller — enables the risk-based
+              recommendation rules. Callers without zone/municipality
+              context (e.g. the ad hoc /predict endpoint) can omit it.
 
         Output:
             - Predicted next_year_change_pct.
@@ -68,7 +72,8 @@ class ModelService:
         recommendations = (
             self.recommendation_service.recommend(
                 top_factors,
-                features
+                features,
+                risk
             )
         )
 
