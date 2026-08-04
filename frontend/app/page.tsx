@@ -4,7 +4,7 @@
 // and the zone summary table. Owns the selected-zone state that the map
 // and the table share.
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import KpiRow from "@/components/KpiRow";
 import ZoneTable from "@/components/ZoneTable";
@@ -24,6 +24,29 @@ export default function Home() {
 
   const [selectedZoneId, setSelectedZoneId] = useState<string | null>(null);
   const [filteredZones, setFilteredZones] = useState<ZoneSummary[]>([]);
+
+  const mapSectionRef = useRef<HTMLElement>(null);
+
+  // Picking a zone in the table also brings the map back into view. The
+  // table sits well below the fold, so selecting a row there used to fly
+  // the map to a zone the user could not see and open a detail panel
+  // offscreen — the click read as doing nothing at all.
+  //
+  // Only the table does this. Selecting on the map itself already has
+  // the map in view, and scrolling underneath someone mid-click would be
+  // its own kind of wrong.
+  const handleTableSelect = useCallback((zoneId: string) => {
+    setSelectedZoneId(zoneId);
+
+    const prefersReducedMotion =
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    mapSectionRef.current?.scrollIntoView({
+      behavior: prefersReducedMotion ? "auto" : "smooth",
+      block: "start",
+    });
+  }, []);
 
   // Fetch real zones and summary stats from the backend once on mount.
   useEffect(() => {
@@ -112,7 +135,10 @@ export default function Home() {
         </div>
       )}
 
-      <section className="bg-bg-panel border border-line rounded-2xl overflow-hidden relative">
+      <section
+        ref={mapSectionRef}
+        className="bg-bg-panel border border-line rounded-2xl overflow-hidden relative scroll-mt-4"
+      >
         <header className="flex justify-between items-center px-5 py-3.5 border-b border-line bg-bg-panel-alt">
           <h2 className="font-display text-sm font-semibold flex items-center gap-2">
             <MapPinIcon className="text-accent" />
@@ -189,7 +215,7 @@ export default function Home() {
         <ZoneTable
           zones={zones}
           selectedZoneId={selectedZoneId}
-          onSelect={setSelectedZoneId}
+          onSelect={handleTableSelect}
           onFilteredZonesChange={setFilteredZones}
         />
       </section>
