@@ -131,8 +131,12 @@ export default function Home() {
               onSelect={setSelectedZoneId}
             />
 
+            {/* Needs its own opaque background. It used to rely on
+                backdrop-blur alone, which read fine over the old pale
+                street tiles but leaves dark ink on dark satellite
+                imagery now that the map is photographic. */}
             <div
-              className={`aether-panel-scroll absolute top-0 right-0 h-full w-[560px] max-w-[92%] backdrop-blur-sm border-l border-line shadow-[-8px_0_24px_-8px_rgba(22,36,30,0.2)] overflow-y-auto z-[500] rounded-r-xl transition-transform duration-300 ease-in-out ${
+              className={`aether-panel-scroll absolute top-0 right-0 h-full w-[560px] max-w-[92%] bg-bg-panel/95 backdrop-blur-md border-l border-line shadow-[-8px_0_24px_-8px_rgba(22,36,30,0.35)] overflow-y-auto z-[500] rounded-r-xl transition-transform duration-300 ease-in-out ${
                 isPanelOpen ? "translate-x-0" : "translate-x-full pointer-events-none"
               }`}
             >
@@ -167,7 +171,9 @@ export default function Home() {
               <div
                 className="absolute bottom-0 right-0 w-[560px] max-w-[92%] h-10 pointer-events-none z-[501] rounded-br-xl"
                 style={{
-                  background: "linear-gradient(to top, rgba(243,248,245,0.55), rgba(243,248,245,0))",
+                  // Matches the panel's own white, not the page background —
+                  // this fade sits on top of the panel, not beside it.
+                  background: "linear-gradient(to top, rgba(255,255,255,0.9), rgba(255,255,255,0))",
                 }}
               />
             )}
