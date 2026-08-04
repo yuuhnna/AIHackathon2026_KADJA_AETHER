@@ -2,7 +2,8 @@ import type {
   ZoneSummary,
   SummaryStats,
   FeatureImportanceItem,
-  ModelMetrics
+  ModelMetrics,
+  ErrorByRangeItem
 } from "./types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -37,11 +38,10 @@ interface BackendZoneSummary {
   confidence_flag?: string;
 }
 
-// The bulk /zones list doesn't include top_factors, recommendations, or
+// The backend doesn't yet provide top_factors, recommendations, or
 // rehabilitation_status — this fills them with safe defaults so
-// DetailPanel and ZoneTable don't crash reading undefined fields.
-// Real top_factors/recommendations are fetched separately per zone via
-// fetchZoneDetail() below when a zone is actually selected.
+// DetailPanel and ZoneTable don't crash reading undefined fields, until
+// those are added backend-side.
 function toFrontendZone(z: BackendZoneSummary): ZoneSummary {
   return {
     zone_id: z.zone_id,
@@ -115,4 +115,15 @@ function toFrontendZoneDetail(z: BackendZoneDetail): ZoneSummary {
 export async function fetchZoneDetail(zoneId: string): Promise<ZoneSummary> {
   const data = await getJSON<BackendZoneDetail>(`/zones/${zoneId}`);
   return toFrontendZoneDetail(data);
+}
+
+export async function fetchErrorBySeverity(): Promise<ErrorByRangeItem[]> {
+  const data = await getJSON<any[]>("/error-by-severity");
+  return data.map((item) => ({
+    range: item.range,
+    sampleSize: item.sample_size,
+    mae: item.mae,
+    errorMin: item.error_min,
+    errorMax: item.error_max,
+  }));
 }
