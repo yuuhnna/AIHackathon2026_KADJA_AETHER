@@ -417,6 +417,53 @@ def sample_image_at_centroid(image, polygons, band_mapping):
 
     return pd.DataFrame(data)
 
+
+def build_srtm_image(province):
+    """
+    Loads SRTM 30m elevation and derives slope.
+
+    Outputs:
+        elevation (m)
+        slope (degrees)
+    """
+
+    dem = ee.Image("USGS/SRTMGL1_003")
+
+    elevation = dem.rename("elevation")
+    slope = ee.Terrain.slope(dem).rename("slope")
+
+    srtm = elevation.addBands(slope)
+
+    print("✓ SRTM elevation/slope image created.")
+
+    return srtm
+
+
+def compute_terrain_features(polygons, province):
+    """
+    Computes elevation and slope for every mangrove polygon.
+
+    Features
+    --------
+    elevation_m
+    slope_deg
+    """
+
+    srtm = build_srtm_image(province)
+
+    terrain_df = sample_image_at_centroid(
+        image=srtm,
+        polygons=polygons,
+        band_mapping={
+            "elevation": "elevation_m",
+            "slope": "slope_deg",
+        },
+    )
+
+    print(f"✓ Terrain features computed ({len(terrain_df)} polygons)")
+
+    return terrain_df
+
 # ============================================================================
 # MAIN
 # ============================================================================
@@ -457,6 +504,13 @@ def main():
     )
 
     print(climate_df.head())
+
+    terrain_df = compute_terrain_features(
+        polygons,
+        province
+    )
+
+    print(terrain_df.head())
 
 if __name__ == "__main__":
     main()
