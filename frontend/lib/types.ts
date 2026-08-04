@@ -59,6 +59,31 @@ export const REHAB_STATUSES: readonly RehabStatus[] = [
   "Completed",
 ] as const;
 
+// Mirrors the rule-based engine's action categories as documented on the
+// Data & Methodology page (see ValidationTable.tsx), so a logged action is
+// filed under the same vocabulary the recommendation itself came from.
+export type ActionCategory =
+  | "Restoration"
+  | "Protection & Enforcement"
+  | "Monitoring"
+  | "Climate Adaptation"
+  | "Intervention Planning"
+  | "Integrated Management";
+
+// Bodies that carry out mangrove conservation work in Iloilo. DENR and its
+// PENRO/CENRO field offices hold national mandate; MENRO is the municipal
+// environment office; the rest are the usual implementing partners.
+export const IMPLEMENTING_UNITS = [
+  "DENR",
+  "PENRO",
+  "CENRO",
+  "MENRO",
+  "LGU",
+  "People's Organization",
+  "Academe",
+  "NGO",
+] as const;
+
 /**
  * Uniform monitored-zone area (a 300m x 300m grid cell). Also the ceiling for
  * a single entry's reported area covered — a field team cannot rehabilitate
