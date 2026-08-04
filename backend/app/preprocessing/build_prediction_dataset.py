@@ -38,6 +38,7 @@ from datetime import datetime, timedelta
 import fiona
 import pyogrio
 import geopandas as gpd
+import json
 
 
 # ============================================================================
@@ -564,12 +565,14 @@ def compute_distance_features(polygons, province):
     return distance_df
 
 
-def merge_feature_tables(vegetation_df, climate_df, terrain_df, distance_df, location_df, municipality_df):
+def merge_feature_tables(vegetation_df, climate_df, terrain_df, distance_df, location_df, municipality_df, geo_df):
     feature_table = vegetation_df.merge(climate_df, on="zone_id", how="left")
     feature_table = feature_table.merge(terrain_df, on="zone_id", how="left")
     feature_table = feature_table.merge(distance_df, on="zone_id", how="left")
     feature_table = feature_table.merge(location_df, on="zone_id", how="left")
     feature_table = feature_table.merge(municipality_df, on="zone_id", how="left")
+    feature_table = feature_table.merge(geo_df, on="zone_id", how="left")
+
 
     print(
         f"✓ Feature tables merged "
@@ -591,6 +594,29 @@ def export_feature_table(feature_table):
 
     print(f"✓ Feature table exported to {OUTPUT_PATH}")
 
+
+def compute_geometry_column(polygons):
+    """
+    Attaches each zone's full polygon boundary as a GeoJSON string in a
+    ".geo" column -- the same convention Earth Engine uses when
+    exporting FeatureCollections straight to CSV. Keeps geometry
+    traveling with the rest of the metadata in one file.
+    """
+
+    rows = polygons.select(["zone_id"]).getInfo()["features"]
+
+    data = []
+    for feature in rows:
+        data.append({
+            "zone_id": feature["properties"].get("zone_id"),
+            ".geo": json.dumps(feature["geometry"]),
+        })
+
+    geo_df = pd.DataFrame(data)
+
+    print(f"✓ Geometry column computed ({len(geo_df)} polygons)")
+
+    return geo_df
 # ============================================================================
 # MAIN
 # ============================================================================
@@ -635,6 +661,9 @@ def main():
     municipality_df = compute_municipality_features(location_df)
     print(municipality_df.head())
 
+    geo_df = compute_geometry_column(polygons)
+    print(geo_df.head())
+
     feature_table = merge_feature_tables(
         vegetation_df,
         climate_df,
@@ -642,6 +671,7 @@ def main():
         distance_df,
         location_df,
         municipality_df,
+        geo_df
     )
 
     print(len(feature_table))                             # should be 398
@@ -659,6 +689,8 @@ def main():
         for col in name_cols:
             if "Ajuy" in gdf[col].values:
                 print(f"Found 'Ajuy' in layer={layer_name}, column={col}")
+
+
 
 
 if __name__ == "__main__":
