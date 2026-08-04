@@ -1,3 +1,8 @@
+"""
+Writes analysis figures to analysis/plots at a consistent size and DPI,
+so every plot in the report looks like it came from the same run.
+"""
+
 from pathlib import Path
 import matplotlib.pyplot as plt
 
