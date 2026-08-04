@@ -362,7 +362,8 @@ export default function ZoneTable({
         <button
           type="button"
           onClick={handleExport}
-          disabled={filtered.length === 0}
+          disabled={filtered.length === 0 ? true : undefined}
+          suppressHydrationWarning
           className="flex items-center gap-1.5 font-mono text-[11px] text-muted hover:text-ink border border-line hover:border-faint bg-bg-panel px-2.5 py-1.5 rounded-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
         >
           <DownloadIcon />
