@@ -1,106 +1,27 @@
 "use client";
 
-// Model Explainability — headline accuracy metrics, what the model leans
-// on globally (MDI), and where its error is concentrated.
-
 import { useEffect, useState } from "react";
-import { fetchFeatureImportance, fetchModelMetrics, fetchErrorBySeverity } from "@/lib/api";
-import type { FeatureImportanceItem, ModelMetrics, ErrorByRangeItem } from "@/lib/types";
+import { fetchFeatureImportance, fetchErrorBySeverity } from "@/lib/api";
+import type { FeatureImportanceItem, ErrorByRangeItem } from "@/lib/types";
 import FeatureImportance from "@/components/FeatureImportance";
 import ErrorByRange from "@/components/ErrorByRange";
-import { ChartBarIcon, InfoIcon, TargetIcon, CheckCircleIcon, WarningIcon } from "@/components/icons";
-
-const PLACEHOLDER_METRICS: ModelMetrics = {
-  mae: null,
-  rmse: null,
-  r2: null,
-  confidence_score: null,
-};
-
-function ModelMetricsRow({ metrics }: { metrics: ModelMetrics }) {
-  const cards = [
-    {
-      label: "Mean Absolute Error (MAE)",
-      value: metrics.mae,
-      format: (v: number) => v.toFixed(4),
-      colorClass: "text-ink",
-      accentClass: "bg-faint",
-      icon: <TargetIcon className="text-faint" />,
-    },
-    {
-      label: "Root Mean Squared Error (RMSE)",
-      value: metrics.rmse,
-      format: (v: number) => v.toFixed(4),
-      colorClass: "text-accent",
-      accentClass: "bg-accent",
-      icon: <ChartBarIcon className="text-accent" />,
-    },
-    {
-      label: "R² Score",
-      value: metrics.r2,
-      format: (v: number) => v.toFixed(3),
-      colorClass: "text-risk-low",
-      accentClass: "bg-risk-low",
-      icon: <CheckCircleIcon className="text-risk-low" />,
-    },
-    {
-      label: "Model Confidence Score",
-      value: metrics.confidence_score,
-      format: (v: number) => `${(v * 100).toFixed(1)}%`,
-      colorClass: "text-risk-moderate",
-      accentClass: "bg-risk-moderate",
-      icon: <WarningIcon className="text-risk-moderate" />,
-    },
-  ];
-
-  return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 pl-1.5">
-      {cards.map((card) => (
-        <div key={card.label} className="relative">
-          <span
-            className={`absolute -left-1.5 inset-y-0 right-0 rounded-2xl -z-10 ${card.accentClass}`}
-            aria-hidden="true"
-          />
-          <div className="bg-bg-panel border border-line rounded-2xl shadow-[0_2px_8px_-2px_rgba(22,36,30,0.08),0_1px_2px_rgba(22,36,30,0.04)] p-4 pl-5">
-            <div className="flex items-center justify-between mb-2">
-              <div className="text-[10.5px] uppercase tracking-wider text-muted font-medium">
-                {card.label}
-              </div>
-              {card.icon}
-            </div>
-            <div className={`font-display text-[26px] xl:text-[28px] font-semibold ${card.colorClass}`}>
-              {card.value !== null ? (
-                card.format(card.value)
-              ) : (
-                <span className="text-faint text-[15px] font-mono font-normal">— pending eval</span>
-              )}
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
+import { ChartBarIcon, InfoIcon, WarningIcon } from "@/components/icons";
 
 export default function ExplainabilityPage() {
   const [importance, setImportance] = useState<FeatureImportanceItem[]>([]);
-  const [metrics, setMetrics] = useState<ModelMetrics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [errorBySeverity, setErrorBySeverity] = useState<ErrorByRangeItem[]>([]);
 
   useEffect(() => {
-    Promise.all([fetchFeatureImportance(), fetchModelMetrics(), fetchErrorBySeverity(),], )
-      .then(([importanceData, metricsData, severityData]) => {
+    Promise.all([fetchFeatureImportance(), fetchErrorBySeverity()])
+      .then(([importanceData, severityData]) => {
         setImportance(importanceData);
-        setMetrics(metricsData);
         setErrorBySeverity(severityData);
         setLoading(false);
       })
       .catch((err) => {
-        setError(
-          err instanceof Error ? err.message : "Failed to load AI artifacts."
-        );
+        setError(err instanceof Error ? err.message : "Failed to load AI artifacts.");
         setLoading(false);
       });
   }, []);
@@ -114,77 +35,38 @@ export default function ExplainabilityPage() {
             <ChartBarIcon className="text-accent" />
             AI Model Explainability
           </h1>
-
           <p className="text-[12.5px] text-muted mt-1.5">
             How the model weighs each factor and how well its predictions hold up
             against known outcomes.
           </p>
 
           <div className="mt-5 flex flex-wrap items-stretch gap-y-4">
-
             <div className="px-5 first:pl-0 border-r border-line">
-              <div className="text-[10px] uppercase tracking-[0.16em] text-faint font-medium">
-                Dataset
-              </div>
-              <div className="mt-1 text-[15px] font-semibold text-ink">
-                2018–2022
-              </div>
-              <div className="text-[11px] text-muted">
-                CGMD
-              </div>
+              <div className="text-[10px] uppercase tracking-[0.16em] text-faint font-medium">Dataset</div>
+              <div className="mt-1 text-[15px] font-semibold text-ink">2018–2022</div>
+              <div className="text-[11px] text-muted">CGMD</div>
             </div>
-
             <div className="px-5 border-r border-line">
-              <div className="text-[10px] uppercase tracking-[0.16em] text-faint font-medium">
-                Observations
-              </div>
-              <div className="mt-1 text-[15px] font-semibold text-ink">
-                2559
-              </div>
-              <div className="text-[11px] text-muted">
-                Training Data
-              </div>
+              <div className="text-[10px] uppercase tracking-[0.16em] text-faint font-medium">Observations</div>
+              <div className="mt-1 text-[15px] font-semibold text-ink">2559</div>
+              <div className="text-[11px] text-muted">Training Data</div>
             </div>
-
             <div className="px-5 border-r border-line">
-              <div className="text-[10px] uppercase tracking-[0.16em] text-faint font-medium">
-                Model
-              </div>
-              <div className="mt-1 text-[15px] font-semibold text-ink">
-                Random Forest
-              </div>
-              <div className="text-[11px] text-muted">
-                Regression
-              </div>
+              <div className="text-[10px] uppercase tracking-[0.16em] text-faint font-medium">Model</div>
+              <div className="mt-1 text-[15px] font-semibold text-ink">Random Forest</div>
+              <div className="text-[11px] text-muted">Regression</div>
             </div>
-
             <div className="px-5 border-r border-line">
-              <div className="text-[10px] uppercase tracking-[0.16em] text-faint font-medium">
-                Features
-              </div>
-              <div className="mt-1 text-[15px] font-semibold text-ink">
-                9 Variables
-              </div>
+              <div className="text-[10px] uppercase tracking-[0.16em] text-faint font-medium">Features</div>
+              <div className="mt-1 text-[15px] font-semibold text-ink">9 Variables</div>
             </div>
-
             <div className="px-5">
-              <div className="text-[10px] uppercase tracking-[0.16em] text-faint font-medium">
-                Prediction Target
-              </div>
-              <div className="mt-1 text-[15px] font-semibold text-ink">
-                Area Loss %
-              </div>
-              <div className="text-[11px] text-muted">
-                Next-Year
-              </div>
+              <div className="text-[10px] uppercase tracking-[0.16em] text-faint font-medium">Prediction Target</div>
+              <div className="mt-1 text-[15px] font-semibold text-ink">Area Loss %</div>
+              <div className="text-[11px] text-muted">Next-Year</div>
             </div>
-
           </div>
         </header>
-
-        
-
-        <ModelMetricsRow metrics={metrics ?? PLACEHOLDER_METRICS} />
 
         {loading && (
           <div
@@ -250,20 +132,16 @@ export default function ExplainabilityPage() {
                 </p>
                 <div className="pt-3 mt-3 border-t border-line-soft">
                   <div className="text-[10.5px] uppercase tracking-wider text-faint font-medium mb-2">
-                    Model performance metrics above
+                    About this model
                   </div>
                   <ul className="space-y-1.5 text-muted">
                     <li>
-                      <span className="font-mono text-ink">MAE / RMSE</span> — average prediction
-                      error, in the same units as the vulnerability score; lower is better.
+                      <span className="font-mono text-ink">MDI</span> — Mean Decrease in Impurity,
+                      a model-wide measure of how much each feature reduces prediction error.
                     </li>
                     <li>
-                      <span className="font-mono text-ink">R²</span> — how much of the variation in
-                      outcomes the model explains; closer to 1.0 is better.
-                    </li>
-                    <li>
-                      <span className="font-mono text-ink">Confidence Score</span> — the share of
-                      zones with reliable, non-placeholder input data.
+                      <span className="font-mono text-ink">SHAP</span> — per-prediction explanation
+                      used in the Zone Assessment Details panel on the Dashboard.
                     </li>
                   </ul>
                 </div>
@@ -288,12 +166,8 @@ export default function ExplainabilityPage() {
                   Error distribution grouped by the observed mangrove area loss.
                 </p>
               </div>
-
-              <span className="font-mono text-[11px] text-faint">
-                Test Dataset
-              </span>
+              <span className="font-mono text-[11px] text-faint">Test Dataset</span>
             </div>
-
             <div className="p-5">
               <ErrorByRange items={errorBySeverity} />
             </div>
