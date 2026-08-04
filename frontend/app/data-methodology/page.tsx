@@ -125,7 +125,7 @@ export default function MethodologyPage() {
               What AETHER&apos;s model is for, and the unit it reasons about. 
             </h3>
             <p className="text-[12.5px] text-muted leading-relaxed">
-              AETHER&apos;S AI model addresses the challenge of helping environmental managers prioritize limitedc conservation
+              AETHER&apos;S AI model addresses the challenge of helping environmental managers prioritize limited conservation
               resources by predicting which mangrove management zones are most likely to experience future degration - 
               enabling proactive rather than reactive intervention. 
             </p>
@@ -351,130 +351,20 @@ export default function MethodologyPage() {
           </table>
         </div>
 
-          <div>
-            <h3 className="text-[12.5px] font-semibold text-ink mb-2">
-              Feature Justification Table
+           <div>
+            <h3 className="text-[13px] font-semibold text-ink mb-2">
+              Why mangrove Area Loss, not "Degration" directly?
             </h3>
-           <div className="overflow-x-auto rounded-lg border border-line">
-          <table className="w-full table-fixed border-collapse text-[12.5px]">
-            <thead className="bg-bg-panel-alt border-b border-line">
-              <tr>
-                <th className="w-[25%] px-4 py-3 align-top text-left font-semibold text-ink">
-                  Feature
-                </th>
-                <th className="w-[55%] px-4 py-3 align-top text-left font-semibold text-ink">
-                  Description
-                </th>
-                <th className="w-[20%] px-4 py-3 align-top text-left font-semibold text-ink">
-                  Source
-                </th>
-              </tr>
-            </thead>
 
-            <tbody className="divide-y divide-line-soft">
-              <tr>
-                <td className="px-4 py-3 align-top font-medium text-ink">
-                  Vegetation Health (NDVI)
-                </td>
-                <td className="px-4 py-3 align-top text-muted">
-                  General canopy greenness and vigor derived from Sentinel-2
-                  reflectance. Sensitive to vegetation stress before it becomes visible
-                  on the ground.
-                </td>
-                <td className="px-4 py-3 align-top text-muted">Sentinel-2</td>
-              </tr>
+            <p className="text-[12.5px] text-muted leading-relaxed">
+            Mangrove degration is a multidimentional ecological process - structural fragmentation, reduced vegetation,
+            health, biodiversity loss, hydrological alteration, changes in ecosystem function. No single publicly availabe
+            dataset comprehensively captures all od these dimensions across space and time. For MVP, AETHER uses annual mangrove 
+            area loss as a measurable proxy for one impoortant manifestation of degration, because it provides objective, historically
+            observable labels suitable for suoervised learning. 
+          </p> 
+          </div>
 
-              <tr>
-                <td className="px-4 py-3 align-top font-medium text-ink">
-                  Mangrove-specific Vegetation (MVI)
-                </td>
-                <td className="px-4 py-3 align-top text-muted">
-                  A mangrove-specific vegetation index that distinguishes mangrove stand
-                  condition from general greenness, which NDVI alone cannot provide.
-                </td>
-                <td className="px-4 py-3 align-top text-muted">Sentinel-2</td>
-              </tr>
-
-              <tr>
-                <td className="px-4 py-3 align-top font-medium text-ink">
-                  Mean Air Temperature
-                </td>
-                <td className="px-4 py-3 align-top text-muted">
-                  Mean air temperature for the zone. Sustained heat stress is linked to
-                  canopy dieback.
-                </td>
-                <td className="px-4 py-3 align-top text-muted">ERA5</td>
-              </tr>
-
-              <tr>
-                <td className="px-4 py-3 align-top font-medium text-ink">
-                  Annual Precipitation
-                </td>
-                <td className="px-4 py-3 align-top text-muted">
-                  Total annual rainfall. Both prolonged deficit and abnormal excess are
-                  associated with mangrove stress.
-                </td>
-                <td className="px-4 py-3 align-top text-muted">ERA5</td>
-              </tr>
-
-              <tr>
-                <td className="px-4 py-3 align-top font-medium text-ink">
-                  Mean Wind Exposure
-                </td>
-                <td className="px-4 py-3 align-top text-muted">
-                  Average wind speed. Higher exposure raises physical storm-damage risk
-                  to mangrove stands.
-                </td>
-                <td className="px-4 py-3 align-top text-muted">ERA5</td>
-              </tr>
-
-              <tr>
-                <td className="px-4 py-3 align-top font-medium text-ink">
-                  Elevation Above Sea Level
-                </td>
-                <td className="px-4 py-3 align-top text-muted">
-                  Height above sea level. Low-elevation zones face greater tidal
-                  inundation and flood exposure.
-                </td>
-                <td className="px-4 py-3 align-top text-muted">SRTM</td>
-              </tr>
-
-              <tr>
-                <td className="px-4 py-3 align-top font-medium text-ink">
-                  Terrain Slope
-                </td>
-                <td className="px-4 py-3 align-top text-muted">
-                  Steepness of terrain. Steeper slopes are more prone to erosion and
-                  sediment loss.
-                </td>
-                <td className="px-4 py-3 align-top text-muted">SRTM</td>
-              </tr>
-
-              <tr>
-                <td className="px-4 py-3 align-top font-medium text-ink">
-                  Proximity to Aquaculture
-                </td>
-                <td className="px-4 py-3 align-top text-muted">
-                  Distance to the nearest aquaculture site. Closer proximity indicates
-                  higher land-conversion pressure.
-                </td>
-                <td className="px-4 py-3 align-top text-muted">OpenStreetMap</td>
-              </tr>
-
-              <tr>
-                <td className="px-4 py-3 align-top font-medium text-ink">
-                  Proximity to Rivers
-                </td>
-                <td className="px-4 py-3 align-top text-muted">
-                  Distance to the nearest river. Affects freshwater and sediment
-                  connectivity important for recovery.
-                </td>
-                <td className="px-4 py-3 align-top text-muted">OpenStreetMap</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        </div>
           <div>
              <h3 className="text-[13px] font-semibold text-ink mb-2">
               MVI Formula % Citation
@@ -522,7 +412,7 @@ export default function MethodologyPage() {
 <div id="input-features" className="bg-bg-panel border border-line rounded-2xl shadow-[0_2px_8px_-2px_rgba(22,36,30,0.08),0_1px_2px_rgba(22,36,30,0.04)] overflow-hidden mb-5 scroll-mt-7">
         <div className="flex justify-between items-center px-4.5 py-3.5 border-b border-line bg-bg-panel-alt">
           <h2 className="font-display text-sm font-semibold flex items-center gap-2 text-accent">
-            <span className="text-ink">Input features</span>
+            <span className="text-ink">Input Features</span>
           </h2>
           <span className="font-mono text-[11px] text-faint">{INPUT_FEATURES.length} features</span>
         </div>
@@ -547,7 +437,7 @@ export default function MethodologyPage() {
       >
             <div className="flex justify-between items-center px-4.5 py-3.5 border-b border-line bg-bg-panel-alt">
               <h2 className="font-display text-sm font-semibold flex items-center gap-2 text-accent">
-                <span className="text-ink">Data sources</span>
+                <span className="text-ink">Data Sources</span>
               </h2>
               <span className="font-mono text-[11px] text-faint">{DATA_SOURCES.length} sources</span>
             </div>
@@ -569,7 +459,7 @@ export default function MethodologyPage() {
           >
             <div className="flex justify-between items-center px-4.5 py-3.5 border-b border-line bg-bg-panel-alt">
               <h2 className="font-display text-sm font-semibold flex items-center gap-2 text-accent">
-                <span className="text-ink">Recommendation engine &amp; expert validation</span>
+                <span className="text-ink">Recommendation Engine &amp; Expert Validation</span>
               </h2>
               <span className="font-mono text-[11px] text-faint">PENRO Guimaras (DENR)</span>
             </div>
@@ -620,10 +510,10 @@ export default function MethodologyPage() {
           >
             <div className="flex justify-between items-center px-4.5 py-3.5 border-b border-line bg-bg-panel-alt">
               <h2 className="font-display text-sm font-semibold flex items-center gap-2 text-accent">
-                <span className="text-ink">Scope, bias &amp; limitations</span>
+                <span className="text-ink">Scope, Bias &amp; Limitations</span>
               </h2>
             </div>
-            <div className="p-4.5">
+            <div className="p-4.5"> 
               <ul className="space-y-3.5">
                 <li className="flex gap-2.5">
                   <span className="font-mono text-[10.5px] uppercase tracking-wider text-faint mt-0.5 shrink-0 w-20">
