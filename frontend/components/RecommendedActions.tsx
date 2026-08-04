@@ -12,22 +12,15 @@ import { ACTION_CATEGORY_PILL_CLASS, classifyRecommendation, describeDriver } fr
 import RecommendationsDialog from "@/components/RecommendationsDialog";
 import { CheckCircleIcon, ChevronRightIcon } from "@/components/icons";
 
-/**
- * Compact summary of a zone's recommendations inside the map detail panel.
- * The panel is too narrow for the full logging form, so each row opens
- * RecommendationsDialog at that recommendation instead.
- */
 export default function RecommendedActions({ zone }: { zone: ZoneSummary }) {
   const activities = useActivities();
-  const [dialogIndex, setDialogIndex] = useState<number | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   const historyByRecommendation = useMemo(
     () => selectRecommendationHistory(activities, zone.zone_id),
     [activities, zone.zone_id]
   );
 
-  // Every activity on this zone, not just ones traceable to a recommendation
-  // — the timeline shows seed records too, so the count must match it.
   const zoneActivityCount = useMemo(
     () => selectZoneActivities(activities, zone.zone_id).length,
     [activities, zone.zone_id]
@@ -54,66 +47,67 @@ export default function RecommendedActions({ zone }: { zone: ZoneSummary }) {
         its field context and record what was implemented.
       </p>
 
-      <ul className="list-none flex flex-col gap-2">
-        {zone.recommendations.map((recommendation, index) => {
-          const { title, category } = classifyRecommendation(recommendation);
-          const entries = historyByRecommendation.get(recommendation) ?? [];
-          const latest = entries[0];
+      {/* Outer card — clicking anywhere opens the dialog */}
+      <button
+        type="button"
+        onClick={() => setDialogOpen(true)}
+        className="w-full text-left mt-2 flex flex-col rounded-lg border border-accent/40 bg-accent/[0.04] hover:bg-accent/[0.08] hover:border-accent/70 transition-colors group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent overflow-hidden cursor-pointer"
+      >
+        {/* Recommendation rows — each in their own card inside */}
+        <div className="flex flex-col gap-2 p-2">
+          {zone.recommendations.map((recommendation, index) => {
+            const { title, category } = classifyRecommendation(recommendation);
+            const entries = historyByRecommendation.get(recommendation) ?? [];
 
-          return (
-            <li key={recommendation}>
-              <button
-                type="button"
-                onClick={() => setDialogIndex(index)}
-                aria-haspopup="dialog"
-                className={`w-full text-left rounded-lg border p-3 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
-                  latest
-                    ? "border-accent/40 bg-accent/[0.04] hover:bg-accent/[0.08]"
-                    : "border-line bg-bg-panel-alt/40 hover:bg-bg-panel-alt hover:border-accent/50"
-                }`}
+            return (
+              <div
+                key={recommendation}
+                className="flex items-start gap-2.5 rounded-md border border-accent/20 bg-bg-panel px-3 py-2.5"
               >
-                <div className="flex items-start gap-2.5">
-                  <span
-                    aria-hidden="true"
-                    className={`mt-0.5 shrink-0 w-5 h-5 rounded-full flex items-center justify-center font-mono text-[10px] font-semibold ${
-                      latest ? "bg-accent text-white" : "bg-accent/15 text-accent"
-                    }`}
-                  >
-                    {latest ? <CheckCircleIcon className="w-3 h-3" /> : index + 1}
-                  </span>
+                <span
+                  aria-hidden="true"
+                  className={`mt-0.5 shrink-0 w-5 h-5 rounded-full flex items-center justify-center font-mono text-[10px] font-semibold ${
+                    entries.length > 0 ? "bg-accent text-white" : "bg-accent/15 text-accent"
+                  }`}
+                >
+                  {entries.length > 0 ? <CheckCircleIcon className="w-3 h-3" /> : index + 1}
+                </span>
 
-                  <span className="flex-1 min-w-0">
-                    <span className="flex items-center gap-1.5 flex-wrap mb-1">
-                      <span
-                        className={`inline-block px-1.5 py-0.5 rounded-sm font-mono text-[9.5px] uppercase tracking-wide ${ACTION_CATEGORY_PILL_CLASS[category]}`}
-                      >
-                        {category}
+                <span className="flex-1 min-w-0">
+                  <span className="flex items-center gap-1.5 flex-wrap mb-0.5">
+                    <span
+                      className={`inline-block px-1.5 py-0.5 rounded-sm font-mono text-[9.5px] uppercase tracking-wide ${ACTION_CATEGORY_PILL_CLASS[category]}`}
+                    >
+                      {category}
+                    </span>
+                    {entries.length > 0 && (
+                      <span className="inline-block px-1.5 py-0.5 rounded-sm font-mono text-[9.5px] bg-accent/15 text-accent">
+                        {entries.length} logged
                       </span>
-                      {entries.length > 0 && (
-                        <span className="inline-block px-1.5 py-0.5 rounded-sm font-mono text-[9.5px] bg-accent/15 text-accent">
-                          {entries.length} logged
-                        </span>
-                      )}
-                    </span>
-
-                    <span className="block text-[12.5px] font-semibold text-ink leading-snug">
-                      {title}
-                    </span>
-                    <span className="block font-mono text-[10px] text-muted mt-1 truncate">
-                      Driver: <span className="text-accent">{describeDriver(recommendation, zone)}</span>
-                    </span>
+                    )}
                   </span>
-
-                  <span className="shrink-0 mt-1 text-accent">
-                    <ChevronRightIcon />
+                  <span className="block text-[12.5px] font-semibold text-ink leading-snug">
+                    {title}
                   </span>
-                </div>
-              </button>
-            </li>
-          );
-        })}
-      </ul>
+                  <span className="block font-mono text-[10px] text-muted mt-0.5 truncate">
+                    Driver: <span className="text-accent">{describeDriver(recommendation, zone)}</span>
+                  </span>
+                </span>
+              </div>
+            );
+          })}
+        </div>
 
+        {/* Footer — label + arrow inline, right-aligned */}
+        <div className="flex items-center justify-end gap-1.5 px-3 py-2">
+          <span className="text-[12px] font-semibold text-accent">
+            Validate Recommended Actions
+          </span>
+          <span className="text-accent font-semibold text-[13px]">→</span>
+        </div>
+      </button>
+
+      {/* Rehabilitation timeline link */}
       <Link
         href={`/rehabilitation-activities/${encodeURIComponent(zone.zone_id)}`}
         className="mt-3 flex items-center justify-between gap-2 rounded-lg border border-line hover:border-accent/50 bg-bg-panel-alt/40 hover:bg-bg-panel-alt px-3 py-2.5 transition-colors group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
@@ -131,11 +125,12 @@ export default function RecommendedActions({ zone }: { zone: ZoneSummary }) {
         </span>
       </Link>
 
+      {/* Dialog — opens on top of the map panel */}
       <RecommendationsDialog
         zone={zone}
-        open={dialogIndex !== null}
-        initialIndex={dialogIndex ?? 0}
-        onClose={() => setDialogIndex(null)}
+        open={dialogOpen}
+        initialIndex={0}
+        onClose={() => setDialogOpen(false)}
       />
     </div>
   );
