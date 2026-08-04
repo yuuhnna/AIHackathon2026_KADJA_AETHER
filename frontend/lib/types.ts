@@ -193,3 +193,17 @@ export interface ZoneAssessmentPayload {
   recommendation_name?: string;
   action_category?: string;
 }
+
+export interface ScatterPoint {
+  actual: number;
+  predicted: number;
+  absolute_error: number;
+}
+
+export interface ScatterPlotResponse {
+  chart: string;
+  title: string;
+  x_axis: string;
+  y_axis: string;
+  points: ScatterPoint[];
+}

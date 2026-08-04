@@ -26,6 +26,7 @@ from app.routes.zones import (
 from app.routes.error_by_severity import router as error_by_severity_router
 from app.routes.feature_importance import router as feature_importance_router
 from app.routes.summary import router as summary_router
+from app.routes.scatter import router as scatter_router
 
 
 app = FastAPI(
@@ -59,6 +60,8 @@ app.include_router(zones_router)
 app.include_router(feature_importance_router)
 app.include_router(summary_router)
 app.include_router(error_by_severity_router)
+app.include_router(scatter_router)
+
 
 
 @app.get("/")
