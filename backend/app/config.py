@@ -21,6 +21,7 @@ METRICS_PATH = ROOT_DIR / "artifacts" / "metrics.json"
 GEOMETRY_COLUMN = ".geo"
 
 ERROR_BY_SEVERITY_PATH  = ROOT_DIR / "artifacts" / "error_by_severity.csv"
+SCATTER_PLOT_PATH  = ROOT_DIR / "artifacts" / "scatter_plot.csv"
 
 # Column names AND ORDER match exactly what aether_v1.joblib was
 # trained on (see training/preprocessing/feature_selection.py's
