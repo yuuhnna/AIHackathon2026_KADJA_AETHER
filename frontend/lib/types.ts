@@ -148,11 +148,16 @@ export interface ModelMetrics {
   dataset?: {
     samples: number;
     features: number;
+    year_range?: string;
+    source?: string;
+    prediction_target?: string;
+    prediction_horizon?: string;
   };
 
   model?: {
     name: string;
     version: string;
+    type?: string;
   };
 }
 

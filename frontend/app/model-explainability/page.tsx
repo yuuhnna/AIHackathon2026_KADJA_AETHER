@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { fetchFeatureImportance, fetchErrorBySeverity } from "@/lib/api";
-import type { FeatureImportanceItem, ErrorByRangeItem } from "@/lib/types";
+import { fetchFeatureImportance, fetchErrorBySeverity, fetchModelMetrics } from "@/lib/api";
+import type { FeatureImportanceItem, ErrorByRangeItem, ModelMetrics } from "@/lib/types";
 import FeatureImportance from "@/components/FeatureImportance";
 import ErrorByRange from "@/components/ErrorByRange";
 import { ChartBarIcon, InfoIcon, WarningIcon } from "@/components/icons";
@@ -12,12 +12,19 @@ export default function ExplainabilityPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [errorBySeverity, setErrorBySeverity] = useState<ErrorByRangeItem[]>([]);
+  // Fetched from the backend — never hardcoded
+  const [metrics, setMetrics] = useState<ModelMetrics | null>(null);
 
   useEffect(() => {
-    Promise.all([fetchFeatureImportance(), fetchErrorBySeverity()])
-      .then(([importanceData, severityData]) => {
+    Promise.all([
+      fetchFeatureImportance(),
+      fetchErrorBySeverity(),
+      fetchModelMetrics(),
+    ])
+      .then(([importanceData, severityData, metricsData]) => {
         setImportance(importanceData);
         setErrorBySeverity(severityData);
+        setMetrics(metricsData);
         setLoading(false);
       })
       .catch((err) => {
@@ -25,6 +32,45 @@ export default function ExplainabilityPage() {
         setLoading(false);
       });
   }, []);
+
+  // Derive display values from live metrics so nothing is hardcoded
+  const metaItems = metrics ? [
+    {
+      label: "Dataset",
+      value: metrics.dataset?.year_range ?? "—",
+      sub: metrics.dataset?.source ?? "—",
+      subClass: "text-accent",
+    },
+    {
+      label: "Observations",
+      value: metrics.dataset?.samples
+        ? metrics.dataset.samples.toLocaleString()
+        : "—",
+      sub: "Training Data",
+      subClass: "text-muted",
+    },
+    {
+      label: "Model",
+      // Strip "Regressor" from the name for brevity e.g. "Random Forest"
+      value: metrics.model?.name?.replace(" Regressor", "") ?? "—",
+      sub: metrics.model?.type ?? "Regression",
+      subClass: "text-muted",
+    },
+    {
+      label: "Features",
+      value: metrics.dataset?.features
+        ? `${metrics.dataset.features} Variables`
+        : "—",
+      sub: "Input features",
+      subClass: "text-muted",
+    },
+    {
+      label: "Prediction Target",
+      value: metrics.dataset?.prediction_target ?? "—",
+      sub: metrics.dataset?.prediction_horizon ?? "—",
+      subClass: "text-muted",
+    },
+  ] : [];
 
   return (
     <main className="flex flex-1 flex-col px-6 pb-14 pt-0">
@@ -40,36 +86,37 @@ export default function ExplainabilityPage() {
             against known outcomes.
           </p>
 
-          {/* Wrap in the same grid as the panels below so widths match exactly */}
+          {/* Metadata card — data comes from /api/model-metrics, not hardcoded */}
           <div className="mt-5 grid grid-cols-1 lg:grid-cols-2 gap-5">
             <div className="bg-bg-panel border border-line rounded-2xl shadow-[0_2px_8px_-2px_rgba(22,36,30,0.08),0_1px_2px_rgba(22,36,30,0.04)] overflow-hidden">
-              <div className="flex flex-wrap items-stretch divide-x divide-line">
-                <div className="px-6 py-4">
-                  <div className="text-[10.5px] uppercase tracking-[0.18em] text-faint font-semibold mb-1">Dataset</div>
-                  <div className="text-[17px] font-bold text-ink leading-tight">2018–2022</div>
-                  <div className="text-[12px] text-accent mt-0.5">CGMD</div>
+              {metrics ? (
+                <div className="flex flex-wrap items-stretch divide-x divide-line">
+                  {metaItems.map((item) => (
+                    <div key={item.label} className="px-6 py-4">
+                      <div className="text-[10.5px] uppercase tracking-[0.18em] text-faint font-semibold mb-1">
+                        {item.label}
+                      </div>
+                      <div className="text-[17px] font-bold text-ink leading-tight">
+                        {item.value}
+                      </div>
+                      <div className={`text-[12px] mt-0.5 ${item.subClass}`}>
+                        {item.sub}
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <div className="px-6 py-4">
-                  <div className="text-[10.5px] uppercase tracking-[0.18em] text-faint font-semibold mb-1">Observations</div>
-                  <div className="text-[17px] font-bold text-ink leading-tight">2,559</div>
-                  <div className="text-[12px] text-muted mt-0.5">Training Data</div>
+              ) : (
+                // Skeleton while metrics are loading
+                <div className="flex flex-wrap items-stretch divide-x divide-line animate-pulse">
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <div key={i} className="px-6 py-4">
+                      <div className="h-2.5 w-16 bg-line rounded mb-2" />
+                      <div className="h-5 w-20 bg-line rounded mb-1.5" />
+                      <div className="h-2 w-12 bg-line rounded" />
+                    </div>
+                  ))}
                 </div>
-                <div className="px-6 py-4">
-                  <div className="text-[10.5px] uppercase tracking-[0.18em] text-faint font-semibold mb-1">Model</div>
-                  <div className="text-[17px] font-bold text-ink leading-tight">Random Forest</div>
-                  <div className="text-[12px] text-muted mt-0.5">Regression</div>
-                </div>
-                <div className="px-6 py-4">
-                  <div className="text-[10.5px] uppercase tracking-[0.18em] text-faint font-semibold mb-1">Features</div>
-                  <div className="text-[17px] font-bold text-ink leading-tight">9 Variables</div>
-                  <div className="text-[12px] text-muted mt-0.5">Input features</div>
-                </div>
-                <div className="px-6 py-4">
-                  <div className="text-[10.5px] uppercase tracking-[0.18em] text-faint font-semibold mb-1">Prediction Target</div>
-                  <div className="text-[17px] font-bold text-ink leading-tight">Area Loss %</div>
-                  <div className="text-[12px] text-muted mt-0.5">Next-Year</div>
-                </div>
-              </div>
+              )}
             </div>
           </div>
         </header>

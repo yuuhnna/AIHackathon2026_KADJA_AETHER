@@ -5,10 +5,15 @@
     "confidence_score": 0.869140625,
     "dataset": {
         "samples": 2559,
-        "features": 9
+        "features": 9,
+        "year_range": "2018\u20132022",
+        "source": "CGMD",
+        "prediction_target": "Area Loss %",
+        "prediction_horizon": "Next-Year"
     },
     "model": {
         "name": "Random Forest Regressor",
-        "version": "1.0"
+        "version": "1.0",
+        "type": "Regression"
     }
 }

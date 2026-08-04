@@ -42,14 +42,16 @@ class SummaryService:
 
         highest_prediction = max(predictions)
 
+        # Convert vulnerability_score to expected_area_loss (same as the
+        # table) so the KPI card and zone table show consistent numbers.
+        # expected_area_loss = vulnerability_score / 100 * ZONE_AREA_HA
+        highest_area_loss = round(float(highest_prediction) / 100 * ZONE_AREA_HA, 2)
+
         return SummaryResponse(
             total_mangrove_zones=total_zones,
             total_mangrove_area_ha=total_area,
-            highest_predicted_area_loss_pct=round(
-                float(highest_prediction),
-                2
-            ),
-            active_rehabilitation_initiatives=0   # NOTE: Hardcoded temporarily, add implementation after rehabilitations activities is implemented
+            highest_predicted_area_loss_pct=highest_area_loss,
+            active_rehabilitation_initiatives=0
         )
 
 
