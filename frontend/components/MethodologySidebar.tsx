@@ -49,23 +49,35 @@ export default function MethodologySidebar() {
   const [activeId, setActiveId] = useState(ALL_SECTIONS[0].id);
 
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries.filter((e) => e.isIntersecting);
-        if (visible.length > 0) {
-          setActiveId(visible[0].target.id);
-        }
-      },
-      { rootMargin: "-15% 0px -70% 0px", threshold: 0 }
-    );
+  const handleScroll = () => {
+    const scrollPosition = window.scrollY + 150;
+
+    // If we've reached the bottom of the page, force the last section active.
+    if (
+      window.innerHeight + window.scrollY >=
+      document.documentElement.scrollHeight - 5
+    ) {
+      setActiveId(ALL_SECTIONS[ALL_SECTIONS.length - 1].id);
+      return;
+    }
+
+    let current = ALL_SECTIONS[0].id;
 
     for (const section of ALL_SECTIONS) {
       const el = document.getElementById(section.id);
-      if (el) observer.observe(el);
+      if (el && el.offsetTop <= scrollPosition) {
+        current = section.id;
+      }
     }
 
-    return () => observer.disconnect();
-  }, []);
+    setActiveId(current);
+  };
+
+  window.addEventListener("scroll", handleScroll, { passive: true });
+  handleScroll();
+
+  return () => window.removeEventListener("scroll", handleScroll);
+}, []);
 
   return (
     <nav aria-label="Data & Methodology sections" className="sticky top-7 hidden lg:block w-52 shrink-0">
