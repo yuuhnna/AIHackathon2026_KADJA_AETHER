@@ -112,10 +112,6 @@ export interface RehabActivity {
   action_taken?: string;
   /** Which body carried out the work. Logged entries only. */
   implementing_unit?: string;
-  /** Hectares treated, as reported. Never derived or predicted by AETHER. */
-  area_covered_ha?: number;
-  /** Free-text pointer to supporting evidence (photo set, report no.). */
-  evidence_ref?: string;
   /** Optional — field work is often logged against a unit, not a person. */
   officer_name?: string;
   source: "seed" | "logged";
@@ -164,8 +160,6 @@ export interface ZoneAssessmentPayload {
   unit: string;
   officer?: string;
   action: string;
-  areaHa?: number;
-  evidenceRef?: string;
   notes?: string;
   validatedItems: string[];   // checklist items confirmed at the time of logging
   recommendation_text?: string;
