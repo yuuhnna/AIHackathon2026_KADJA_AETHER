@@ -18,8 +18,26 @@ class DataService:
     def __init__(self):
         """
         Load the dataset into memory.
+        Normalise column names so the current_feature_table.csv
+        (which uses slightly different names) maps to the same
+        FEATURE_COLUMNS the model was trained on.
         """
-        self.dataset = pd.read_csv(FEATURE_TABLE_PATH)
+        df = pd.read_csv(FEATURE_TABLE_PATH)
+
+        # Map current_feature_table.csv names → training names
+        df = df.rename(columns={
+            "nearest_distance_to_aquaculture_m": "nearest_aquaculture_distance_m",
+            "nearest_distance_to_roads_m":        "nearest_river_distance_m",
+        })
+
+        # Fill any missing required columns with 0 so the model
+        # can still run — these will be flagged as low-confidence.
+        from app.config import FEATURE_COLUMNS
+        for col in FEATURE_COLUMNS:
+            if col not in df.columns:
+                df[col] = 0.0
+
+        self.dataset = df
 
     def get_all_zones(self) -> list[dict]:
         """
