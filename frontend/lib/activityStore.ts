@@ -129,12 +129,16 @@ function getSnapshot(): RehabActivity[] {
   if (cachedSnapshot === null) {
     const logged = readLogged();
     if (supabaseState === "ok") {
-      // Supabase is the source of truth — show only what's in the DB
-      // (already written to localStorage by syncFromSupabase).
+      // Supabase is the source of truth — only show real DB data.
       cachedSnapshot = sortByDateDesc(logged);
-    } else {
-      // Not yet fetched or offline — merge seed + localStorage
+    } else if (supabaseState === "failed") {
+      // Supabase unreachable (no env vars or network down) — fall back
+      // to seed + localStorage so the app still works offline.
       cachedSnapshot = sortByDateDesc([...SEED_ACTIVITIES, ...logged]);
+    } else {
+      // Still fetching — show nothing rather than flashing seed data.
+      // The component will re-render as soon as syncFromSupabase resolves.
+      cachedSnapshot = sortByDateDesc(logged);
     }
   }
   return cachedSnapshot;

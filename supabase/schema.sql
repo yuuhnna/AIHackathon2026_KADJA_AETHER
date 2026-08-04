@@ -54,7 +54,11 @@ create index if not exists zone_assessments_zone_id_idx
 create index if not exists zone_assessments_date_idx
   on public.zone_assessments (date desc);
 
--- ── Row-Level Security ────────────────────────────────────────
+-- Drop area_covered_ha and evidence_ref columns (removed from UI)
+alter table public.rehab_activities  drop column if exists area_covered_ha;
+alter table public.rehab_activities  drop column if exists evidence_ref;
+alter table public.zone_assessments  drop column if exists area_ha;
+alter table public.zone_assessments  drop column if exists evidence_ref;
 alter table public.rehab_activities  enable row level security;
 alter table public.zone_assessments  enable row level security;
 

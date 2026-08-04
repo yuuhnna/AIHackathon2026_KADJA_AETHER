@@ -33,7 +33,7 @@ const DATA_SOURCES = [
   },
   {
     name: "OpenStreetMap",
-    use: "Distance to nearest road, aquaculture site, and river",
+    use: "Distance aquaculture site, and river",
   },
 ];
 

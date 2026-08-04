@@ -5,7 +5,7 @@
 // the map. Filtering here also drives what the map plots.
 
 import { useEffect, useMemo, useState } from "react";
-import type { ZoneSummary } from "@/lib/types";
+import { REHAB_STATUSES, type ZoneSummary } from "@/lib/types";
 import { downloadCSV } from "@/lib/csv";
 import { REHAB_STATUS_PILL_CLASS, RISK_PILL_CLASS, RISK_LABEL } from "@/lib/colors";
 import {
@@ -136,11 +136,17 @@ export default function ZoneTable({
     return Array.from(set).sort((a, b) => a.localeCompare(b));
   }, [safeZones]);
 
-  // Derived from the effective statuses, so a status that exists only in the
-  // activity log is still selectable in the filter.
+  // Ensures standard statuses (Planned, Active, Under Review, Completed) are always selectable,
+  // plus any additional status found in the logged activities or feature data (e.g. "None").
   const statusOptions = useMemo(() => {
-    const set = new Set<string>(effectiveStatus.values());
-    return Array.from(set).sort((a, b) => a.localeCompare(b));
+    const set = new Set<string>(REHAB_STATUSES);
+    effectiveStatus.values().forEach((s) => {
+      if (s) set.add(s);
+    });
+    const extras = Array.from(set)
+      .filter((s) => !(REHAB_STATUSES as readonly string[]).includes(s))
+      .sort((a, b) => a.localeCompare(b));
+    return [...REHAB_STATUSES, ...extras];
   }, [effectiveStatus]);
 
   const filtered = useMemo(() => {
@@ -374,37 +380,34 @@ export default function ZoneTable({
       </div>
 
       <div className="max-h-[420px] overflow-y-auto overflow-x-auto rounded-lg border border-line-soft">
-        <table className="w-full border-collapse text-[12.5px] table-fixed min-w-[920px]">
+        {/* table-fixed with equal padding on all cells for consistent spacing */}
+        <table className="w-full border-collapse text-[12.5px] table-fixed min-w-[800px]">
           <colgroup>
-            <col className="w-[11%]" />
-            <col className="w-[13%]" />
-            <col className="w-[13%]" />
-            <col className="w-[9%]" />
-            <col className="w-[22%]" />
-            <col className="w-[10%]" />
-            <col className="w-[13%]" />
+            <col style={{ width: "17%" }} />
+            <col style={{ width: "17%" }} />
+            <col style={{ width: "14%" }} />
+            <col style={{ width: "14%" }} />
+            <col style={{ width: "24%" }} />
+            <col style={{ width: "14%" }} />
           </colgroup>
           <thead className="bg-bg-panel-alt sticky top-0 z-10">
             <tr>
-              <th className="text-left text-[10.5px] uppercase tracking-wider text-faint px-3 py-2.5 border-b border-line">
+              <th className="text-left text-[10.5px] uppercase tracking-wider text-faint px-4 py-2.5 border-b border-line">
                 Zone
               </th>
-              <th className="text-left text-[10.5px] uppercase tracking-wider text-faint px-3 py-2.5 border-b border-line">
+              <th className="text-left text-[10.5px] uppercase tracking-wider text-faint px-4 pl-12 py-2.5 border-b border-line">
                 Municipality / City
               </th>
-              <th className="text-center text-[10.5px] uppercase tracking-wider text-faint px-3 py-2.5 border-b border-line">
+              <th className="text-center text-[10.5px] uppercase tracking-wider text-faint px-4 py-2.5 border-b border-line">
                 Area Loss (%)
               </th>
-              <th className="text-center text-[10.5px] uppercase tracking-wider text-faint px-3 py-2.5 border-b border-line">
+              <th className="text-center text-[10.5px] uppercase tracking-wider text-faint px-2 py-2.5 border-b border-line">
                 Risk
               </th>
-              <th className="text-left text-[10.5px] uppercase tracking-wider text-faint px-3 py-2.5 border-b border-line">
+              <th className="text-left text-[10.5px] uppercase tracking-wider text-faint px-4 py-2.5 border-b border-line">
                 Top Contributing Factor
               </th>
-              <th className="text-center text-[10.5px] uppercase tracking-wider text-faint px-3 py-2.5 border-b border-line">
-                Confidence
-              </th>
-              <th className="text-center text-[10.5px] uppercase tracking-wider text-faint px-3 py-2.5 border-b border-line">
+              <th className="text-center text-[10.5px] uppercase tracking-wider text-faint px-4 py-2.5 border-b border-line">
                 Rehab. Status
               </th>
             </tr>
@@ -435,17 +438,17 @@ export default function ZoneTable({
                   }`}
                 >
                   <td
-                    className={`font-mono px-3 py-2.5 border-b border-line-soft truncate ${
+                    className={`font-mono px-4 py-2.5 border-b border-line-soft truncate ${
                       isSelected ? "font-semibold text-ink" : ""
                     }`}
                     title={z.zone_id}
                   >
                     {z.zone_id}
                   </td>
-                  <td className="px-3 py-2.5 border-b border-line-soft text-ink truncate" title={z.municipality}>
+                  <td className="px-4 pl-12 py-2.5 border-b border-line-soft text-ink truncate" title={z.municipality}>
                     {z.municipality ?? "—"}
                   </td>
-                  <td className="font-mono px-3 py-2.5 border-b border-line-soft text-center">
+                  <td className="font-mono px-4 py-2.5 border-b border-line-soft text-center">
                     {z.expected_area_loss.toFixed(2)}%
                   </td>
                   <td className="px-2 py-2.5 border-b border-line-soft">
@@ -458,25 +461,12 @@ export default function ZoneTable({
                     </div>
                   </td>
                   <td
-                    className="font-mono px-3 py-2.5 border-b border-line-soft text-muted truncate"
+                    className="font-mono px-4 py-2.5 border-b border-line-soft text-muted truncate"
                     title={z.top_factors[0]?.label ?? "—"}
                   >
                     {z.top_factors[0]?.label ?? "—"}
                   </td>
-                  <td className="px-2 py-2.5 border-b border-line-soft">
-                    <div className="flex justify-center">
-                      {z.confidence_flag === "ok" ? (
-                        <span className="inline-flex items-center gap-1 font-mono text-[11px] text-risk-low">
-                          <CheckIcon /> Ok
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 font-mono text-[11px] text-risk-moderate">
-                          <AlertIcon /> Low
-                        </span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-2 py-2.5 border-b border-line-soft">
+                  <td className="px-4 py-2.5 border-b border-line-soft">
                     <div className="flex justify-center">
                       <span
                         className={`inline-block px-2 py-0.5 rounded-sm font-mono text-[10px] whitespace-nowrap ${
@@ -494,7 +484,7 @@ export default function ZoneTable({
 
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={7} className="text-center py-8 text-faint font-mono text-[12px]">
+                <td colSpan={6} className="text-center py-8 text-faint font-mono text-[12px]">
                   No zones match your filters.
                 </td>
               </tr>

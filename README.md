@@ -90,6 +90,14 @@ AETHER extracts environmental features at the **Mangrove Management Area (MMA)**
 > Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 > ```
 
+> **Required: `.env.local` file** — this file is gitignored and must be shared manually by the project owner. Create `frontend/.env.local` with:
+> ```
+> NEXT_PUBLIC_SUPABASE_URL=https://noslbvnjmtvdffrbhsfi.supabase.co
+> NEXT_PUBLIC_SUPABASE_ANON_KEY=<ask project owner for the anon key>
+> NEXT_PUBLIC_API_URL=http://localhost:8000
+> ```
+> Without this file, the app will show placeholder/seed data instead of real Supabase records.
+
 ```bash
 # Navigate to frontend directory
 cd frontend
