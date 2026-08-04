@@ -92,6 +92,7 @@ export default function ExplainabilityPage() {
         setImportance(importanceData);
         setMetrics(metricsData);
         setErrorBySeverity(severityData);
+        setLoading(false);
       })
       .catch((err) => {
         setError(
