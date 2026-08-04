@@ -169,13 +169,21 @@ export async function unlogActivityFromSupabase(id: string): Promise<void> {
 
 /**
  * Save a field-validation assessment for a zone recommendation.
+ *
+ * Dual-write:
+ *   1. zone_assessments — the full assessment record with checklist etc.
+ *   2. rehab_activities — so this zone appears in Rehabilitation Activities
+ *      with the correct status, date, and action taken.
  */
 export async function submitAssessmentToSupabase(
   zoneId: string,
   recommendationIndex: number,
-  payload: ZoneAssessmentPayload & { recommendation_text?: string }
+  payload: ZoneAssessmentPayload & { recommendation_text?: string; recommendation_name?: string; action_category?: string }
 ): Promise<void> {
-  const insert = {
+  const client = requireSupabase();
+
+  // 1 ── zone_assessments (full audit record)
+  const assessmentInsert = {
     zone_id: zoneId,
     recommendation_index: recommendationIndex,
     recommendation_text: payload.recommendation_text ?? null,
@@ -190,11 +198,48 @@ export async function submitAssessmentToSupabase(
     validated_items: payload.validatedItems,
   };
 
-  const { error } = await requireSupabase()
+  const { error: assessmentError } = await client
     .from("zone_assessments")
-    .insert(insert);
+    .insert(assessmentInsert);
 
-  if (error) throw new Error(error.message);
+  if (assessmentError) throw new Error(assessmentError.message);
+
+  // 2 ── rehab_activities (so it shows in Rehabilitation Activities)
+  // Map the assessment status to a RehabStatus value.
+  const rehabStatus =
+    payload.status === "Completed" ? "Completed" :
+    payload.status === "Ongoing"   ? "Active"    :
+    "Planned";
+
+  const activityId = `log-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const activityInsert = {
+    id: activityId,
+    zone_id: zoneId,
+    date: payload.date,
+    status: rehabStatus as "Planned" | "Active" | "Under Review" | "Completed",
+    action_category: payload.action_category ?? "Restoration",
+    recommendation_name: payload.recommendation_name ?? `Recommendation ${recommendationIndex + 1}`,
+    recommendation_text: payload.recommendation_text ?? null,
+    action_taken: payload.action.trim() || null,
+    implementing_unit: payload.unit || null,
+    area_covered_ha: payload.areaHa ?? null,
+    evidence_ref: payload.evidenceRef?.trim() || null,
+    officer_name: payload.officer?.trim() || null,
+    source: "logged" as const,
+  };
+
+  const { error: activityError } = await client
+    .from("rehab_activities")
+    .insert(activityInsert);
+
+  if (activityError) throw new Error(activityError.message);
+
+  // 3 ── invalidate the in-memory store so Rehabilitation Activities
+  //      updates instantly without a page refresh.
+  //      We import dynamically to avoid a circular dependency.
+  const { invalidateActivities, resetSupabaseState } = await import("./activityStoreInvalidate");
+  resetSupabaseState();
+  invalidateActivities();
 }
 
 /**

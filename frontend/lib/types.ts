@@ -164,5 +164,8 @@ export interface ZoneAssessmentPayload {
   areaHa?: number;
   evidenceRef?: string;
   notes?: string;
-  validatedItems: string[]; // checklist items confirmed at the time of logging
+  validatedItems: string[];   // checklist items confirmed at the time of logging
+  recommendation_text?: string;
+  recommendation_name?: string;
+  action_category?: string;
 }

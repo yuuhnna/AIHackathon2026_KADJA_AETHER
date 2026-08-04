@@ -52,6 +52,12 @@ function CheckIcon() {
   );
 }
 
+type SavedAssessment = {
+  date: string;
+  status: string;
+  unit: string;
+};
+
 function RecommendationCard({
   zoneId,
   index,
@@ -65,7 +71,7 @@ function RecommendationCard({
   const [form, setForm] = useState<AssessmentForm>(() => emptyForm(rec.validationPoints));
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [justSaved, setJustSaved] = useState(false);
+  const [saved, setSaved] = useState<SavedAssessment | null>(null);
 
   const checkedCount = form.checks.filter(Boolean).length;
   const allChecked = checkedCount === rec.validationPoints.length;
@@ -73,7 +79,6 @@ function RecommendationCard({
   function openForm() {
     setForm(emptyForm(rec.validationPoints));
     setError(null);
-    setJustSaved(false);
     setFormOpen(true);
   }
 
@@ -111,9 +116,13 @@ function RecommendationCard({
         evidenceRef: form.evidenceRef || undefined,
         notes: form.notes || undefined,
         validatedItems: rec.validationPoints,
+        // Pass these so rehab_activities gets meaningful labels
+        recommendation_text: rec.text,
+        recommendation_name: `Recommendation ${index + 1}: ${rec.text.slice(0, 60)}`,
+        action_category: rec.category,
       });
+      setSaved({ date: form.date, status: form.status, unit: form.unit });
       setFormOpen(false);
-      setJustSaved(true);
     } catch {
       setError("Could not save this entry. Please try again.");
     } finally {
@@ -148,14 +157,22 @@ function RecommendationCard({
       </div>
 
       <div className="mt-4 flex items-center justify-between">
-        <span className="text-sm text-muted">
-          {justSaved ? "Assessment logged." : "No activity recorded yet"}
-        </span>
+        {saved ? (
+          <span className="flex items-center gap-2 text-sm text-risk-low font-medium">
+            <svg width="14" height="14" viewBox="0 0 20 20" fill="none">
+              <circle cx="10" cy="10" r="7.5" stroke="currentColor" strokeWidth="1.5"/>
+              <path d="M6.5 10.2l2.3 2.3 4.7-5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            Logged — {saved.status} · {saved.date} · {saved.unit}
+          </span>
+        ) : (
+          <span className="text-sm text-muted">No activity recorded yet</span>
+        )}
         <button
           onClick={() => (formOpen ? setFormOpen(false) : openForm())}
           className="text-sm font-medium border border-line rounded-md px-3 py-1.5 hover:bg-bg-panel-alt transition-colors"
         >
-          {formOpen ? "Cancel" : "Log zone assessment"}
+          {formOpen ? "Cancel" : saved ? "Log another" : "Log zone assessment"}
         </button>
       </div>
 

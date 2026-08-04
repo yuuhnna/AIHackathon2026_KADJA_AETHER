@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import KpiRow from "@/components/KpiRow";
 import ZoneTable from "@/components/ZoneTable";
 import DetailPanel from "@/components/DetailPanel";
 import { MapPinIcon, CloseIcon } from "@/components/icons";
 import { fetchZones, fetchSummary, fetchZoneDetail } from "@/lib/api";
+import { useActivities } from "@/lib/activityStore";
 import type { SummaryStats, ZoneSummary } from "@/lib/types";
 
 const RealMap = dynamic(() => import("@/components/RealMap"), { ssr: false });
@@ -89,9 +90,22 @@ export default function Home() {
 
   const isPanelOpen = selectedZone !== null;
 
+  // Count all individual activity records with Active status from Supabase
+  const activities = useActivities();
+  const activeRehabCount = useMemo(() => {
+    return activities.filter((a) => a.status === "Active").length;
+  }, [activities]);
+
+  // Override the backend's active_rehabilitation_count with the live
+  // Supabase-backed count so the KPI card stays in sync.
+  const liveSummary = useMemo<SummaryStats | null>(() => {
+    if (!summary) return null;
+    return { ...summary, active_rehabilitation_count: activeRehabCount };
+  }, [summary, activeRehabCount]);
+
   return (
     <main className="flex flex-1 flex-col px-6 pt-2 pb-8 gap-5">
-      {summary && <KpiRow summary={summary} />}
+      {liveSummary && <KpiRow summary={liveSummary} />}
 
       {error && (
         <div className="rounded-lg border border-risk-high/30 bg-risk-high/5 px-4 py-3 text-[12.5px] text-risk-high">

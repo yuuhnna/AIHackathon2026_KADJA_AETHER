@@ -14,15 +14,41 @@ export default function RehabilitationAreaPage() {
   const params = useParams<{ zoneId: string }>();
   const zoneId = decodeURIComponent(params.zoneId);
 
-  const zone = useMemo(() => MOCK_ZONES.find((z) => z.zone_id === zoneId) ?? null, [zoneId]);
+  const mockZone = useMemo(() => MOCK_ZONES.find((z) => z.zone_id === zoneId) ?? null, [zoneId]);
   const activities = useActivities();
   const zoneActivities = useMemo(
     () => selectZoneActivities(activities, zoneId),
     [activities, zoneId]
   );
 
+  // If the zone isn't in MOCK_ZONES (e.g. logged via Supabase from the
+  // recommendation form), build a minimal display object from the activity
+  // data so the page still renders.
+  const zone = useMemo(() => {
+    if (mockZone) return mockZone;
+    if (zoneActivities.length === 0) return null;
+    // Derive municipality from zone_id prefix (e.g. "CARLES-0217" → "Carles")
+    const prefix = zoneId.split("-")[0];
+    const municipality =
+      prefix.charAt(0).toUpperCase() + prefix.slice(1).toLowerCase();
+    return {
+      zone_id: zoneId,
+      municipality,
+      expected_area_loss: 0,
+      vulnerability_score: 0,
+      risk_class: "low" as const,
+      confidence_flag: "ok",
+      lat: 0,
+      lon: 0,
+      rehabilitation_status: zoneActivities[0]?.status ?? "None",
+      top_factors: [],
+      recommendations: [],
+    };
+  }, [mockZone, zoneActivities, zoneId]);
+
   return (
-    <div className="max-w-[1000px] mx-auto px-10 pt-2 pb-14">
+    <main className="flex flex-1 flex-col px-6 pt-2 pb-14">
+      <div className="max-w-3xl mx-auto w-full">
       <Link
         href="/rehabilitation-activities"
         className="inline-flex items-center gap-1 text-[12.5px] text-muted hover:text-ink transition-colors mb-5 mt-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-sm"
@@ -118,6 +144,11 @@ export default function RehabilitationAreaPage() {
                         {activity.action_taken}
                       </p>
                     )}
+                    {activity.recommendation_text && (
+                      <p className="text-[11.5px] text-faint leading-relaxed mb-2 italic border-l-2 border-accent/30 pl-2">
+                        {activity.recommendation_text}
+                      </p>
+                    )}
                     <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11.5px] text-faint italic">
                       {activity.officer_name && (
                         <span className="inline-flex items-center gap-1.5">
@@ -129,6 +160,9 @@ export default function RehabilitationAreaPage() {
                       {activity.area_covered_ha !== undefined && (
                         <span>{activity.area_covered_ha.toFixed(1)} ha covered</span>
                       )}
+                      {activity.evidence_ref && (
+                        <span>Ref: {activity.evidence_ref}</span>
+                      )}
                     </div>
                   </div>
                 </li>
@@ -137,6 +171,7 @@ export default function RehabilitationAreaPage() {
           )}
         </>
       )}
-    </div>
+      </div>
+    </main>
   );
 }

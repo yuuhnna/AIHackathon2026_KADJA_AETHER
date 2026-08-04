@@ -28,6 +28,7 @@ import {
   unlogActivityFromSupabase,
 } from "./supabaseActivityStore";
 import type { LogActivityInput } from "./supabaseActivityStore";
+import { setInvalidateFn, setResetStateFn } from "./activityStoreInvalidate";
 
 export type { LogActivityInput } from "./supabaseActivityStore";
 
@@ -105,9 +106,10 @@ function writeLogged(activities: RehabActivity[]): void {
 
 const listeners = new Set<() => void>();
 let cachedSnapshot: RehabActivity[] | null = null;
-// True once we've received a successful Supabase response so we stop
-// re-fetching on every subscribe.
-let supabaseSynced = false;
+// null  = not yet fetched
+// true  = fetch succeeded (use Supabase data only)
+// false = fetch failed (fall back to seed + localStorage)
+let supabaseState: "pending" | "ok" | "failed" = "pending";
 
 function emit() {
   for (const listener of listeners) listener();
@@ -118,9 +120,22 @@ function invalidate() {
   emit();
 }
 
+// Register so supabaseActivityStore can trigger a re-render after a write
+// without importing the full store (would create a circular dependency).
+setInvalidateFn(invalidate);
+setResetStateFn(() => { supabaseState = "pending"; });
+
 function getSnapshot(): RehabActivity[] {
   if (cachedSnapshot === null) {
-    cachedSnapshot = sortByDateDesc([...SEED_ACTIVITIES, ...readLogged()]);
+    const logged = readLogged();
+    if (supabaseState === "ok") {
+      // Supabase is the source of truth — show only what's in the DB
+      // (already written to localStorage by syncFromSupabase).
+      cachedSnapshot = sortByDateDesc(logged);
+    } else {
+      // Not yet fetched or offline — merge seed + localStorage
+      cachedSnapshot = sortByDateDesc([...SEED_ACTIVITIES, ...logged]);
+    }
   }
   return cachedSnapshot;
 }
@@ -131,25 +146,26 @@ function getServerSnapshot(): RehabActivity[] {
 
 /**
  * Pull logged activities from Supabase and replace the localStorage cache.
- * Called once per page load (or whenever supabaseSynced is false).
+ * Called on every new subscription so navigation always gets fresh data.
  */
 async function syncFromSupabase(): Promise<void> {
   try {
     const remote = await fetchActivitiesFromSupabase();
-    // Persist to localStorage so subsequent renders are instant.
     writeLogged(remote);
-    supabaseSynced = true;
+    supabaseState = "ok";
     invalidate();
   } catch {
-    // Network error or env vars not set — silently keep using localStorage.
+    supabaseState = "failed";
+    // Keep using seed + localStorage — no crash.
   }
 }
 
 function subscribe(listener: () => void): () => void {
   listeners.add(listener);
 
-  // Kick off a Supabase sync the first time any component subscribes.
-  if (!supabaseSynced && typeof window !== "undefined") {
+  // Always re-sync when a new component subscribes so navigating back to
+  // Rehabilitation Activities shows fresh Supabase data.
+  if (typeof window !== "undefined") {
     syncFromSupabase();
   }
 
