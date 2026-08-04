@@ -40,30 +40,36 @@ export default function ExplainabilityPage() {
             against known outcomes.
           </p>
 
-          <div className="mt-5 flex flex-wrap items-stretch gap-y-4">
-            <div className="px-5 first:pl-0 border-r border-line">
-              <div className="text-[10px] uppercase tracking-[0.16em] text-faint font-medium">Dataset</div>
-              <div className="mt-1 text-[15px] font-semibold text-ink">2018–2022</div>
-              <div className="text-[11px] text-muted">CGMD</div>
-            </div>
-            <div className="px-5 border-r border-line">
-              <div className="text-[10px] uppercase tracking-[0.16em] text-faint font-medium">Observations</div>
-              <div className="mt-1 text-[15px] font-semibold text-ink">2559</div>
-              <div className="text-[11px] text-muted">Training Data</div>
-            </div>
-            <div className="px-5 border-r border-line">
-              <div className="text-[10px] uppercase tracking-[0.16em] text-faint font-medium">Model</div>
-              <div className="mt-1 text-[15px] font-semibold text-ink">Random Forest</div>
-              <div className="text-[11px] text-muted">Regression</div>
-            </div>
-            <div className="px-5 border-r border-line">
-              <div className="text-[10px] uppercase tracking-[0.16em] text-faint font-medium">Features</div>
-              <div className="mt-1 text-[15px] font-semibold text-ink">9 Variables</div>
-            </div>
-            <div className="px-5">
-              <div className="text-[10px] uppercase tracking-[0.16em] text-faint font-medium">Prediction Target</div>
-              <div className="mt-1 text-[15px] font-semibold text-ink">Area Loss %</div>
-              <div className="text-[11px] text-muted">Next-Year</div>
+          {/* Wrap in the same grid as the panels below so widths match exactly */}
+          <div className="mt-5 grid grid-cols-1 lg:grid-cols-2 gap-5">
+            <div className="bg-bg-panel border border-line rounded-2xl shadow-[0_2px_8px_-2px_rgba(22,36,30,0.08),0_1px_2px_rgba(22,36,30,0.04)] overflow-hidden">
+              <div className="flex flex-wrap items-stretch divide-x divide-line">
+                <div className="px-6 py-4">
+                  <div className="text-[10.5px] uppercase tracking-[0.18em] text-faint font-semibold mb-1">Dataset</div>
+                  <div className="text-[17px] font-bold text-ink leading-tight">2018–2022</div>
+                  <div className="text-[12px] text-accent mt-0.5">CGMD</div>
+                </div>
+                <div className="px-6 py-4">
+                  <div className="text-[10.5px] uppercase tracking-[0.18em] text-faint font-semibold mb-1">Observations</div>
+                  <div className="text-[17px] font-bold text-ink leading-tight">2,559</div>
+                  <div className="text-[12px] text-muted mt-0.5">Training Data</div>
+                </div>
+                <div className="px-6 py-4">
+                  <div className="text-[10.5px] uppercase tracking-[0.18em] text-faint font-semibold mb-1">Model</div>
+                  <div className="text-[17px] font-bold text-ink leading-tight">Random Forest</div>
+                  <div className="text-[12px] text-muted mt-0.5">Regression</div>
+                </div>
+                <div className="px-6 py-4">
+                  <div className="text-[10.5px] uppercase tracking-[0.18em] text-faint font-semibold mb-1">Features</div>
+                  <div className="text-[17px] font-bold text-ink leading-tight">9 Variables</div>
+                  <div className="text-[12px] text-muted mt-0.5">Input features</div>
+                </div>
+                <div className="px-6 py-4">
+                  <div className="text-[10.5px] uppercase tracking-[0.18em] text-faint font-semibold mb-1">Prediction Target</div>
+                  <div className="text-[17px] font-bold text-ink leading-tight">Area Loss %</div>
+                  <div className="text-[12px] text-muted mt-0.5">Next-Year</div>
+                </div>
+              </div>
             </div>
           </div>
         </header>
