@@ -1,5 +1,9 @@
 "use client";
 
+// Rehabilitation Activities — one row per zone with logged conservation
+// work, filterable and sortable. A repository of what was reported, not
+// a forecast: nothing here is model-derived.
+
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { MOCK_ZONES } from "@/lib/mockZones";

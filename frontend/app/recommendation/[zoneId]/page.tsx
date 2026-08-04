@@ -1,5 +1,9 @@
 "use client";
 
+// Recommendation validation — a zone's rule-based recommendations, each
+// gated behind a field-validation checklist before an assessment can be
+// logged against it.
+
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { fetchZoneDetail, submitZoneAssessment } from "@/lib/api";

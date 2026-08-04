@@ -1,5 +1,9 @@
 "use client";
 
+// Zone Summary table — the sortable, filterable list of every monitored
+// zone, and the main way to reach a zone that's too small to click on
+// the map. Filtering here also drives what the map plots.
+
 import { useEffect, useMemo, useState } from "react";
 import type { ZoneSummary } from "@/lib/types";
 import { downloadCSV } from "@/lib/csv";

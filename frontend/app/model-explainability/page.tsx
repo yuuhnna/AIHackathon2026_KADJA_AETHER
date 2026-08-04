@@ -1,5 +1,8 @@
 "use client";
 
+// Model Explainability — headline accuracy metrics, what the model leans
+// on globally (MDI), and where its error is concentrated.
+
 import { useEffect, useState } from "react";
 import { fetchFeatureImportance, fetchModelMetrics, fetchErrorBySeverity } from "@/lib/api";
 import type { FeatureImportanceItem, ModelMetrics, ErrorByRangeItem } from "@/lib/types";

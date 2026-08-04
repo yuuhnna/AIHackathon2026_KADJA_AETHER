@@ -1,3 +1,5 @@
+// The four headline figures across the top of the Dashboard.
+
 import type { SummaryStats } from "@/lib/types";
 import { GridIcon, WarningIcon, LeafIcon, MapPinIcon } from "@/components/icons";
 

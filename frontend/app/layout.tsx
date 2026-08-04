@@ -1,3 +1,6 @@
+// Root layout — site metadata, global styles, and the nav bar shared by
+// every page.
+
 import type { Metadata } from "next";
 import NavBar from "@/components/NavBar";
 import "./globals.css";

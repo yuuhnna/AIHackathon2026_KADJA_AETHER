@@ -1,3 +1,6 @@
+// Shared domain types. Field names on the API-facing shapes are
+// snake_case to match the backend payloads verbatim.
+
 export interface SummaryStats {
   total_zones: number;
   total_area_ha?: number;
