@@ -464,6 +464,65 @@ def compute_terrain_features(polygons, province):
 
     return terrain_df
 
+
+def compute_distance_features(polygons, province):
+    """
+    PLACEHOLDER — distance-to-feature values are not yet computed from OSM.
+    Returns the correct shape/columns so the pipeline runs end-to-end;
+    replace with real distance calculations before this feeds the model.
+
+    Features
+    --------
+    dist_aquaculture_m
+    dist_river_m
+    dist_road_m   -- TODO: confirm this is the third distance you want;
+                     using nearest road as a placeholder guess
+    """
+
+    zone_ids = polygons.aggregate_array("zone_id").getInfo()
+
+    distance_df = pd.DataFrame({
+        "zone_id": zone_ids,
+        "dist_aquaculture_m": -1,
+        "dist_river_m": -1,
+        "dist_road_m": -1,
+    })
+
+    print(f"⚠ Distance features are placeholders ({len(distance_df)} polygons)")
+
+    return distance_df
+
+
+def merge_feature_tables(vegetation_df, climate_df, terrain_df, distance_df):
+    """
+    Merges vegetation, climate, terrain, and distance features into a
+    single inference-ready table, keyed on zone_id.
+    """
+
+    feature_table = vegetation_df.merge(climate_df, on="zone_id", how="left")
+    feature_table = feature_table.merge(terrain_df, on="zone_id", how="left")
+    feature_table = feature_table.merge(distance_df, on="zone_id", how="left")
+
+    print(
+        f"✓ Feature tables merged "
+        f"({len(feature_table)} zones, {feature_table.shape[1]} columns)"
+    )
+
+    return feature_table
+
+
+def export_feature_table(feature_table):
+    """
+    Writes the merged feature table to OUTPUT_PATH, creating the
+    destination folder if it doesn't exist yet.
+    """
+
+    OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
+
+    feature_table.to_csv(OUTPUT_PATH, index=False)
+
+    print(f"✓ Feature table exported to {OUTPUT_PATH}")
+
 # ============================================================================
 # MAIN
 # ============================================================================
@@ -511,6 +570,26 @@ def main():
     )
 
     print(terrain_df.head())
+
+    distance_df = compute_distance_features(
+        polygons,
+        province
+    )
+
+    print(distance_df.head())
+
+    feature_table = merge_feature_tables(
+        vegetation_df,
+        climate_df,
+        terrain_df,
+        distance_df
+    )
+
+    export_feature_table(feature_table)
+
+    print(feature_table.head())
+    print(len(feature_table))                    # should be 398
+    print(feature_table["zone_id"].duplicated().sum())  # should be 0
 
 if __name__ == "__main__":
     main()
