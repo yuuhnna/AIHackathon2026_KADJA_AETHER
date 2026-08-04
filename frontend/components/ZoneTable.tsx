@@ -5,7 +5,7 @@
 // the map. Filtering here also drives what the map plots.
 
 import { useEffect, useMemo, useState } from "react";
-import type { ZoneSummary } from "@/lib/types";
+import { REHAB_STATUSES, type ZoneSummary } from "@/lib/types";
 import { downloadCSV } from "@/lib/csv";
 import { REHAB_STATUS_PILL_CLASS, RISK_PILL_CLASS, RISK_LABEL } from "@/lib/colors";
 import {
@@ -136,11 +136,17 @@ export default function ZoneTable({
     return Array.from(set).sort((a, b) => a.localeCompare(b));
   }, [safeZones]);
 
-  // Derived from the effective statuses, so a status that exists only in the
-  // activity log is still selectable in the filter.
+  // Ensures standard statuses (Planned, Active, Under Review, Completed) are always selectable,
+  // plus any additional status found in the logged activities or feature data (e.g. "None").
   const statusOptions = useMemo(() => {
-    const set = new Set<string>(effectiveStatus.values());
-    return Array.from(set).sort((a, b) => a.localeCompare(b));
+    const set = new Set<string>(REHAB_STATUSES);
+    effectiveStatus.values().forEach((s) => {
+      if (s) set.add(s);
+    });
+    const extras = Array.from(set)
+      .filter((s) => !(REHAB_STATUSES as readonly string[]).includes(s))
+      .sort((a, b) => a.localeCompare(b));
+    return [...REHAB_STATUSES, ...extras];
   }, [effectiveStatus]);
 
   const filtered = useMemo(() => {
