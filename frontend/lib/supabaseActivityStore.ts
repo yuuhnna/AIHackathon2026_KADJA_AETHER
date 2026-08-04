@@ -141,8 +141,8 @@ export async function logActivityToSupabase(
     source: "logged" as const,
   };
 
-  const { data, error } = await requireSupabase()
-    .from("rehab_activities")
+  const { data, error } = await (requireSupabase()
+    .from("rehab_activities") as any)
     .insert(insert)
     .select()
     .single();
@@ -198,8 +198,8 @@ export async function submitAssessmentToSupabase(
     validated_items: payload.validatedItems,
   };
 
-  const { error: assessmentError } = await client
-    .from("zone_assessments")
+  const { error: assessmentError } = await (client
+    .from("zone_assessments") as any)
     .insert(assessmentInsert);
 
   if (assessmentError) throw new Error(assessmentError.message);
