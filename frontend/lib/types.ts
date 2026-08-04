@@ -110,3 +110,27 @@ export interface ErrorByRangeItem {
   errorMin: number;    // smallest observed error in this bin
   errorMax: number;    // largest observed error in this bin
 }
+
+export interface ZoneRecommendation {
+  category: string;          // e.g. "Restoration", "Protection & Enforcement"
+  driver: string;             // e.g. "Low NDVI"
+  text: string;                // the recommendation itself
+  validationPoints: string[]; // field validation checklist for this recommendation
+  lastAssessment?: {
+    date: string;
+    status: "Planned" | "Ongoing" | "Completed";
+    unit: string;
+  } | null;
+}
+
+export interface ZoneAssessmentPayload {
+  date: string;
+  status: "Planned" | "Ongoing" | "Completed";
+  unit: string;
+  officer?: string;
+  action: string;
+  areaHa?: number;
+  evidenceRef?: string;
+  notes?: string;
+  validatedItems: string[]; // checklist items confirmed at the time of logging
+}

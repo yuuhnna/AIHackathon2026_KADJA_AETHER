@@ -3,7 +3,8 @@ import type {
   SummaryStats,
   FeatureImportanceItem,
   ModelMetrics,
-  ErrorByRangeItem
+  ErrorByRangeItem,
+  ZoneAssessmentPayload
 } from "./types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -135,3 +136,20 @@ export async function fetchErrorBySeverity(): Promise<ErrorByRangeItem[]> {
     errorMax: item.error_max,
   }));
 }
+
+export async function submitZoneAssessment(
+  zoneId: string,
+  recommendationIndex: number,
+  payload: ZoneAssessmentPayload
+): Promise<void> {
+  const res = await fetch(
+    `/api/zones/${zoneId}/recommendations/${recommendationIndex}/assessments`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    }
+  );
+  if (!res.ok) throw new Error("Failed to save assessment.");
+}
+ 
