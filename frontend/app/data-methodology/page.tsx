@@ -421,27 +421,230 @@ export default function MethodologyPage() {
         </div>
       </div>
 
-<div id="input-features" className="bg-bg-panel border border-line rounded-2xl shadow-[0_2px_8px_-2px_rgba(22,36,30,0.08),0_1px_2px_rgba(22,36,30,0.04)] overflow-hidden mb-5 scroll-mt-7">
-        <div className="flex justify-between items-center px-4.5 py-3.5 border-b border-line bg-bg-panel-alt">
-          <h2 className="font-display text-sm font-semibold flex items-center gap-2 text-accent">
-            <span className="text-ink">Input Features</span>
-          </h2>
-          <span className="font-mono text-[11px] text-faint">{INPUT_FEATURES.length} features</span>
-        </div>
-        <div className="p-4.5">
-          <div className="divide-y divide-line-soft">
-            {INPUT_FEATURES.map((f) => (
-              <div key={f.key} className="py-2.5 first:pt-0 last:pb-0">
-                <div className="flex justify-between items-baseline gap-2">
-                  <div className="text-[12.5px] font-semibold text-ink">{FEATURE_LABELS[f.key]}</div>
-                  <span className="font-mono text-[10px] text-faint shrink-0">{f.source}</span>
-                </div>
-                <div className="text-[12px] text-muted mt-0.5">{f.description}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+<div
+  id="input-features"
+  className="bg-bg-panel border border-line rounded-2xl shadow-[0_2px_8px_-2px_rgba(22,36,30,0.08),0_1px_2px_rgba(22,36,30,0.04)] overflow-hidden mb-5 scroll-mt-7"
+>
+  <div className="flex justify-between items-center px-4.5 py-3.5 border-b border-line bg-bg-panel-alt">
+    <h2 className="font-display text-sm font-semibold flex items-center gap-2 text-accent">
+      <CpuIcon />
+      <span className="text-ink">Input Features</span>
+    </h2>
+
+    <span className="font-mono text-[11px] text-faint">
+      {INPUT_FEATURES.length} features
+    </span>
+  </div>
+
+  <div className="p-5 flex flex-col items-center">
+    {/* Paragraph placed at the top without border/divider lines */}
+    <div className="w-full mb-4">
+      <p className="text-[12px] text-muted leading-relaxed">
+        Each monitored mangrove area is represented by a complete set of input
+        features extracted from Sentinel-2 imagery, ERA5 climate records, SRTM
+        elevation data, and OpenStreetMap-derived proximity measures. These
+        features are combined into a single feature vector that serves as input to
+        the AETHER Random Forest model.
+      </p>
+    </div>
+
+    {/* SVG Graph directly underneath */}
+    <svg
+      width="100%"
+      viewBox="0 0 460 280"
+      role="img"
+      className="w-full max-w-xl mx-auto font-sans select-none"
+    >
+      <title>Input Data Sources</title>
+      <desc>
+        Data sources used by AETHER's Random Forest model.
+      </desc>
+
+      <defs>
+        <marker
+          id="arrow"
+          viewBox="0 0 10 10"
+          refX="8"
+          refY="5"
+          markerWidth="5"
+          markerHeight="5"
+          orient="auto"
+        >
+          <path
+            d="M2 1 L8 5 L2 9"
+            fill="none"
+            stroke="currentColor"
+            className="text-accent"
+            strokeWidth="1.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </marker>
+      </defs>
+
+      {/* COMPACT CURVED CONNECTIONS */}
+      {/* Sentinel-2 */}
+      <path
+        d="M 165 30 C 220 30, 220 120, 275 120"
+        fill="none"
+        stroke="currentColor"
+        className="text-accent/50"
+        strokeWidth="1.2"
+        markerEnd="url(#arrow)"
+      />
+      {/* SRTM */}
+      <path
+        d="M 165 80 C 220 80, 220 130, 275 130"
+        fill="none"
+        stroke="currentColor"
+        className="text-accent/50"
+        strokeWidth="1.2"
+        markerEnd="url(#arrow)"
+      />
+      {/* GMW (Direct Line) */}
+      <line
+        x1="165"
+        y1="140"
+        x2="275"
+        y2="140"
+        stroke="currentColor"
+        className="text-accent/50"
+        strokeWidth="1.2"
+        markerEnd="url(#arrow)"
+      />
+      {/* ERA5 */}
+      <path
+        d="M 165 200 C 220 200, 220 150, 275 150"
+        fill="none"
+        stroke="currentColor"
+        className="text-accent/50"
+        strokeWidth="1.2"
+        markerEnd="url(#arrow)"
+      />
+      {/* OSM */}
+      <path
+        d="M 165 250 C 220 250, 220 160, 275 160"
+        fill="none"
+        stroke="currentColor"
+        className="text-accent/50"
+        strokeWidth="1.2"
+        markerEnd="url(#arrow)"
+      />
+
+      {/* Sentinel-2 */}
+      <g>
+        <rect
+          x="15"
+          y="12"
+          width="150"
+          height="36"
+          rx="6"
+          className="fill-bg-panel-alt stroke-line"
+        />
+        <text x="90" y="27" textAnchor="middle" className="text-[11px] font-semibold fill-ink">
+          Sentinel-2
+        </text>
+        <text x="90" y="39" textAnchor="middle" className="text-[9.5px] fill-muted">
+          NDVI, MVI
+        </text>
+      </g>
+
+      {/* SRTM */}
+      <g>
+        <rect
+          x="15"
+          y="62"
+          width="150"
+          height="36"
+          rx="6"
+          className="fill-bg-panel-alt stroke-line"
+        />
+        <text x="90" y="77" textAnchor="middle" className="text-[11px] font-semibold fill-ink">
+          SRTM DEM
+        </text>
+        <text x="90" y="89" textAnchor="middle" className="text-[9.5px] fill-muted">
+          Elevation, Slope
+        </text>
+      </g>
+
+      {/* GMW */}
+      <g>
+        <rect
+          x="15"
+          y="122"
+          width="150"
+          height="36"
+          rx="6"
+          className="fill-bg-panel-alt stroke-line"
+        />
+        <text x="90" y="137" textAnchor="middle" className="text-[11px] font-semibold fill-ink">
+          Global Mangrove Watch
+        </text>
+        <text x="90" y="149" textAnchor="middle" className="text-[9.5px] fill-muted">
+          Training Label
+        </text>
+      </g>
+
+      {/* ERA5 */}
+      <g>
+        <rect
+          x="15"
+          y="182"
+          width="150"
+          height="36"
+          rx="6"
+          className="fill-bg-panel-alt stroke-line"
+        />
+        <text x="90" y="197" textAnchor="middle" className="text-[11px] font-semibold fill-ink">
+          ERA5 Climate
+        </text>
+        <text x="90" y="209" textAnchor="middle" className="text-[9.5px] fill-muted">
+          Temp, Rain, Wind
+        </text>
+      </g>
+
+      {/* OSM */}
+      <g>
+        <rect
+          x="15"
+          y="232"
+          width="150"
+          height="36"
+          rx="6"
+          className="fill-bg-panel-alt stroke-line"
+        />
+        <text x="90" y="247" textAnchor="middle" className="text-[11px] font-semibold fill-ink">
+          OpenStreetMap
+        </text>
+        <text x="90" y="259" textAnchor="middle" className="text-[9.5px] fill-muted">
+          Road, Aqua, River
+        </text>
+      </g>
+
+      {/* AETHER Target Node */}
+      <g>
+        <rect
+          x="280"
+          y="108"
+          width="155"
+          height="64"
+          rx="8"
+          className="fill-bg-panel-alt stroke-accent"
+          strokeWidth="1.5"
+        />
+        <text x="357" y="128" textAnchor="middle" className="text-[11px] font-bold fill-accent font-display tracking-wide">
+          AETHER
+        </text>
+        <text x="357" y="144" textAnchor="middle" className="text-[11px] font-medium fill-ink">
+          Random Forest
+        </text>
+        <text x="357" y="159" textAnchor="middle" className="text-[9.5px] fill-muted">
+          9 Input Features
+        </text>
+      </g>
+    </svg>
+  </div>
+</div>
 
       <div
         id="data-sources"
