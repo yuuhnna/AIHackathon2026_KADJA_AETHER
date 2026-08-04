@@ -1,5 +1,9 @@
 "use client";
 
+// Zone map — Leaflet, client-only (it touches window/document, so the
+// Dashboard imports it with ssr:false). Zones are plotted as clustered
+// risk-coloured markers over the Iloilo coastline.
+
 import "leaflet/dist/leaflet.css";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";

@@ -1,5 +1,9 @@
 "use client";
 
+// The expert-validated rule table behind the recommendation engine, as
+// shown on Data & Methodology: each driver, the action it triggers, and
+// the field checks that must confirm it.
+
 import { Fragment, useState } from "react";
 import { ChevronDownIcon } from "@/components/icons";
 

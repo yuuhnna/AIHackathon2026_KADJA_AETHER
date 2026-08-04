@@ -1,3 +1,6 @@
+// Zone assessment panel, shown in the map's slide-out drawer: predicted
+// loss, the factors driving it, and the recommended actions.
+
 import type { ZoneSummary } from "@/lib/types";
 import { RISK_LABEL } from "@/lib/colors";
 import RecommendedActions from "@/components/RecommendedActions";

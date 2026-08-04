@@ -1,3 +1,6 @@
+// Data & Methodology — the disclosure page: where the data comes from,
+// how the model is built and validated, and what it can't be used for.
+
 import { FEATURE_LABELS } from "@/lib/colors";
 import MethodologySidebar from "@/components/MethodologySidebar";
 import ValidationTable, { EXPERT_VALIDATION_ROWS } from "@/components/ValidationTable";

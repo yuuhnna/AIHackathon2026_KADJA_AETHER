@@ -1,5 +1,9 @@
 "use client";
 
+// Dashboard — KPI row, zone map with its slide-out assessment drawer,
+// and the zone summary table. Owns the selected-zone state that the map
+// and the table share.
+
 import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import KpiRow from "@/components/KpiRow";
