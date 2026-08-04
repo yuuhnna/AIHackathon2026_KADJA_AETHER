@@ -457,7 +457,7 @@ function tooltipHtml(zone: ZoneSummary): string {
         <span style="color: ${color}; font-weight: 700;">${RISK_LABEL[zone.risk_class]}</span>
       </div>
       <div style="color: #5B6B63; font-size: 10px; margin-top: 2px;">
-        ${zone.expected_area_loss.toFixed(2)} ha predicted loss
+        ${zone.vulnerability_score.toFixed(2)}% predicted loss next year
       </div>
     </div>`;
 }

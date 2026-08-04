@@ -61,10 +61,16 @@ export const FEATURE_LABELS: Record<string, string> = {
   nearest_river_distance_m: "Proximity to rivers",
 };
 
+// Risk is a fixed band of predicted area loss for next year, not a rank
+// against other zones — so each label names its own band. The previous
+// "Top 10% / Next 20% / Remaining 70%" wording described a
+// within-municipality percentile ranking that no longer exists, and
+// would now be actively wrong: there is no guaranteed top 10% any more,
+// and a healthy province can legitimately have no High zones at all.
 export const RISK_LABEL: Record<RiskClass, string> = {
-  high: "Top 10%",
-  moderate: "Next 20%",
-  low: "Remaining 70%",
+  high: "High (>10%)",
+  moderate: "Moderate (5-10%)",
+  low: "Low (<5%)",
 };
 
 // Same wording as the Input Features section on the Data & Methodology
