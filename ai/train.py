@@ -12,6 +12,7 @@ from scripts.model_io import (export_model, load_model)
 from explainability.feature_importance import feature_importance
 from analysis.error_by_severity import (analyze_error_by_severity, plot_error_by_severity, export_error_by_severity)
 from scripts.evaluate import (export_metrics, evaluate_model)
+from scripts.export_scatter import export_scatter_data
 
 # Define constants
 DATASET_PATH = "data/raw/processed/feature_table.csv"
@@ -72,6 +73,7 @@ def main():
         prediction_table,
         "models/error_by_severity.csv"
     )
+    export_scatter_data(prediction_table)
     
 
 
