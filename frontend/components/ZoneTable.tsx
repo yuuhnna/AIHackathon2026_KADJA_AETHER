@@ -380,33 +380,34 @@ export default function ZoneTable({
       </div>
 
       <div className="max-h-[420px] overflow-y-auto overflow-x-auto rounded-lg border border-line-soft">
-        <table className="w-full border-collapse text-[12.5px] table-fixed min-w-[920px]">
+        {/* table-fixed with equal padding on all cells for consistent spacing */}
+        <table className="w-full border-collapse text-[12.5px] table-fixed min-w-[800px]">
           <colgroup>
-            <col className="w-[13%]" />
-            <col className="w-[15%]" />
-            <col className="w-[14%]" />
-            <col className="w-[11%]" />
-            <col className="w-[32%]" />
-            <col className="w-[15%]" />
+            <col style={{ width: "17%" }} />
+            <col style={{ width: "17%" }} />
+            <col style={{ width: "14%" }} />
+            <col style={{ width: "14%" }} />
+            <col style={{ width: "24%" }} />
+            <col style={{ width: "14%" }} />
           </colgroup>
           <thead className="bg-bg-panel-alt sticky top-0 z-10">
             <tr>
-              <th className="text-left text-[10.5px] uppercase tracking-wider text-faint px-3 py-2.5 border-b border-line">
+              <th className="text-left text-[10.5px] uppercase tracking-wider text-faint px-4 py-2.5 border-b border-line">
                 Zone
               </th>
-              <th className="text-left text-[10.5px] uppercase tracking-wider text-faint px-3 py-2.5 border-b border-line">
+              <th className="text-left text-[10.5px] uppercase tracking-wider text-faint px-4 pl-12 py-2.5 border-b border-line">
                 Municipality / City
               </th>
-              <th className="text-center text-[10.5px] uppercase tracking-wider text-faint px-3 py-2.5 border-b border-line">
+              <th className="text-center text-[10.5px] uppercase tracking-wider text-faint px-4 py-2.5 border-b border-line">
                 Area Loss (%)
               </th>
-              <th className="text-center text-[10.5px] uppercase tracking-wider text-faint px-3 py-2.5 border-b border-line">
+              <th className="text-center text-[10.5px] uppercase tracking-wider text-faint px-2 py-2.5 border-b border-line">
                 Risk
               </th>
-              <th className="text-left text-[10.5px] uppercase tracking-wider text-faint px-3 py-2.5 border-b border-line">
+              <th className="text-left text-[10.5px] uppercase tracking-wider text-faint px-4 py-2.5 border-b border-line">
                 Top Contributing Factor
               </th>
-              <th className="text-center text-[10.5px] uppercase tracking-wider text-faint px-3 py-2.5 border-b border-line">
+              <th className="text-center text-[10.5px] uppercase tracking-wider text-faint px-4 py-2.5 border-b border-line">
                 Rehab. Status
               </th>
             </tr>
@@ -437,17 +438,17 @@ export default function ZoneTable({
                   }`}
                 >
                   <td
-                    className={`font-mono px-3 py-2.5 border-b border-line-soft truncate ${
+                    className={`font-mono px-4 py-2.5 border-b border-line-soft truncate ${
                       isSelected ? "font-semibold text-ink" : ""
                     }`}
                     title={z.zone_id}
                   >
                     {z.zone_id}
                   </td>
-                  <td className="px-3 py-2.5 border-b border-line-soft text-ink truncate" title={z.municipality}>
+                  <td className="px-4 pl-12 py-2.5 border-b border-line-soft text-ink truncate" title={z.municipality}>
                     {z.municipality ?? "—"}
                   </td>
-                  <td className="font-mono px-3 py-2.5 border-b border-line-soft text-center">
+                  <td className="font-mono px-4 py-2.5 border-b border-line-soft text-center">
                     {z.expected_area_loss.toFixed(2)}%
                   </td>
                   <td className="px-2 py-2.5 border-b border-line-soft">
@@ -460,12 +461,12 @@ export default function ZoneTable({
                     </div>
                   </td>
                   <td
-                    className="font-mono px-3 py-2.5 border-b border-line-soft text-muted truncate"
+                    className="font-mono px-4 py-2.5 border-b border-line-soft text-muted truncate"
                     title={z.top_factors[0]?.label ?? "—"}
                   >
                     {z.top_factors[0]?.label ?? "—"}
                   </td>
-                  <td className="px-2 py-2.5 border-b border-line-soft">
+                  <td className="px-4 py-2.5 border-b border-line-soft">
                     <div className="flex justify-center">
                       <span
                         className={`inline-block px-2 py-0.5 rounded-sm font-mono text-[10px] whitespace-nowrap ${
