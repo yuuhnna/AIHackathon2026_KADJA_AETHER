@@ -5,7 +5,8 @@ import type {
   ModelMetrics,
   ErrorByRangeItem,
   ZoneAssessmentPayload,
-  ZoneGeoCollection
+  ZoneGeoCollection,
+  ScatterPlotResponse
 } from "./types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -160,3 +161,6 @@ export async function submitZoneAssessment(
   await submitAssessmentToSupabase(zoneId, recommendationIndex, payload);
 }
  
+export function fetchScatterPlot(): Promise<ScatterPlotResponse> {
+  return getJSON<ScatterPlotResponse>("/api/scatter");
+}
