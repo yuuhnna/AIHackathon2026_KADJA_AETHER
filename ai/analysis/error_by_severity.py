@@ -15,6 +15,13 @@ import matplotlib.pyplot as plt
 
 from analysis.save_plot import save_plot
 
+RANGE_BINS = [
+    (0.0, 0.5, "0–0.5 ha"),
+    (0.5, 1.0, "0.5–1 ha"),
+    (1.0, 2.0, "1–2 ha"),
+    (2.0, float("inf"), "2+ ha"),
+]
+
 def analyze_error_by_severity(prediction_table):
     """
     Analyze if the AI model performs poorly or only in severe mangrove degradation cases
@@ -91,3 +98,55 @@ def plot_error_by_severity(summary):
     save_plot("error_by_severity.png")
 
     plt.close()
+
+
+def export_error_by_severity(
+    prediction_table: pd.DataFrame,
+    output_path: str
+) -> pd.DataFrame:
+    """
+    Export error statistics grouped by actual loss severity.
+    """
+
+    df = prediction_table.copy()
+
+    df["absolute_error"] = (
+        df["Actual"] - df["Predicted"]
+    ).abs()
+
+    rows = []
+
+    for lower, upper, label in RANGE_BINS:
+
+        subset = df[
+            (df["Actual"] >= lower)
+            & (df["Actual"] < upper)
+        ]
+
+        rows.append(
+            {
+                "range": label,
+                "sample_size": len(subset),
+                "mae": round(
+                    subset["absolute_error"].mean(),
+                    2
+                ) if len(subset) else None,
+                "error_min": round(
+                    subset["absolute_error"].min(),
+                    2
+                ) if len(subset) else None,
+                "error_max": round(
+                    subset["absolute_error"].max(),
+                    2
+                ) if len(subset) else None,
+            }
+        )
+
+    result = pd.DataFrame(rows)
+
+    result.to_csv(
+        output_path,
+        index=False
+    )
+
+    return result

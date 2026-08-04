@@ -10,7 +10,7 @@ from scripts.trainer import train_model
 from scripts.test import test_model
 from scripts.model_io import (export_model, load_model)
 from explainability.feature_importance import feature_importance
-from analysis.error_by_severity import (analyze_error_by_severity, plot_error_by_severity)
+from analysis.error_by_severity import (analyze_error_by_severity, plot_error_by_severity, export_error_by_severity)
 from scripts.evaluate import (export_metrics, evaluate_model)
 
 # Define constants
@@ -39,6 +39,15 @@ def main():
         y_test
     )
 
+    dataset_info = {
+        "samples": len(df),
+        "features": len(X_train.columns)
+    }
+
+    export_metrics(
+        results,
+        dataset_info
+    )
 
     importance = feature_importance(
         model,
@@ -56,6 +65,13 @@ def main():
 
     plot_error_by_severity(severity_summary)
 
+    print(prediction_table.columns)
+    print(prediction_table.head())
+
+    export_error_by_severity(
+        prediction_table,
+        "models/error_by_severity.csv"
+    )
     
 
 

@@ -45,3 +45,9 @@ export const FEATURE_LABELS: Record<string, string> = {
   nearest_aquaculture_distance_m: "Proximity to aquaculture",
   nearest_river_distance_m: "Proximity to rivers",
 };
+
+export const RISK_LABEL: Record<RiskClass, string> = {
+  high: "Top 10%",
+  moderate: "Next 20%",
+  low: "Remaining 70%",
+};

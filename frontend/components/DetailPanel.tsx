@@ -1,9 +1,9 @@
 import type { ZoneSummary } from "@/lib/types";
-import { RISK_PILL_CLASS } from "@/lib/colors";
+import { RISK_LABEL } from "@/lib/colors";
 
 function AlertIcon({ className }: { className?: string }) {
   return (
-    <svg width="12" height="12" viewBox="0 0 20 20" fill="none" aria-hidden="true" className={className}>
+    <svg width="13" height="13" viewBox="0 0 20 20" fill="none" aria-hidden="true" className={className}>
       <path
         d="M10 2.5l8.5 14.7a1 1 0 01-.87 1.5H2.37a1 1 0 01-.87-1.5L10 2.5z"
         stroke="currentColor"
@@ -27,6 +27,22 @@ function ArrowIcon({ direction }: { direction: "increases" | "decreases" }) {
         strokeLinejoin="round"
       />
     </svg>
+  );
+}
+
+function ChevronRightIcon({ className }: { className?: string }) {
+  return (
+    <svg width="13" height="13" viewBox="0 0 20 20" fill="none" aria-hidden="true" className={className}>
+      <path d="M7.5 4.5l6 5.5-6 5.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="text-[10.5px] uppercase tracking-wider text-muted font-medium mb-2">
+      {children}
+    </div>
   );
 }
 
@@ -61,69 +77,70 @@ export default function DetailPanel({
 
   return (
     <div>
-      <div className="text-[10.5px] uppercase tracking-wider text-muted mb-1.5">
-        Predicted mangrove area loss (%)
-      </div>
-      <div className="flex items-center gap-3 mb-4">
-        <div className={`font-display text-[36px] font-bold leading-none ${textColorClass}`}>
+      <section>
+        <SectionLabel>Predicted mangrove area loss</SectionLabel>
+        <div className={`font-display text-[44px] font-bold leading-none ${textColorClass}`}>
           {zone.expected_area_loss.toFixed(2)}%
         </div>
-        <span
-          className={`inline-flex items-center px-2.5 py-1 rounded-md font-mono text-[11px] font-semibold tracking-wide ${RISK_PILL_CLASS[zone.risk_class]}`}
-        >
-          {zone.risk_class.toUpperCase()} RISK
-        </span>
-      </div>
+        <p className="text-[10.5px] text-faint mt-1.5">
+          <span className={textColorClass}>{RISK_LABEL[zone.risk_class]}</span> among monitored zones in {zone.municipality}
+        </p>
+      </section>
 
-      <div className="text-[10.5px] uppercase tracking-wider text-muted mt-1 mb-1.5">
-        Contributing factors
-      </div>
-      <div>
-        {sortedFactors.map((f) => {
-          const direction: "increases" | "decreases" = f.value >= 0 ? "increases" : "decreases";
-          const barWidthPct = (Math.abs(f.value) / maxAbsImpact) * 100;
-          const barColorClass = direction === "increases" ? "bg-risk-high" : "bg-risk-low";
-          const iconColorClass = direction === "increases" ? "text-risk-high" : "text-risk-low";
+      <section className="mt-4">
+        <SectionLabel>Contributing factors</SectionLabel>
+        <div>
+          {sortedFactors.map((f) => {
+            const direction: "increases" | "decreases" = f.value >= 0 ? "increases" : "decreases";
+            const barWidthPct = (Math.abs(f.value) / maxAbsImpact) * 100;
+            const barColorClass = direction === "increases" ? "bg-risk-high" : "bg-risk-low";
+            const iconColorClass = direction === "increases" ? "text-risk-high" : "text-risk-low";
 
-          return (
-            <div
-              key={f.label}
-              className="flex items-center gap-2.5 py-1.5 border-b border-line-soft last:border-none"
-            >
-              <span className="text-[12.5px] text-ink w-[42%] shrink-0" title={f.label}>
-                {f.label}
-              </span>
-              <div className="flex-1 h-1.5 rounded-full bg-bg-panel-alt overflow-hidden">
-                <div className={`h-full rounded-full ${barColorClass}`} style={{ width: `${barWidthPct}%` }} />
+            return (
+              <div
+                key={f.label}
+                className="flex items-center gap-2.5 py-1"
+              >
+                <span className="text-[12.5px] text-ink w-[42%] shrink-0" title={f.label}>
+                  {f.label}
+                </span>
+                <div className="flex-1 h-1.5 rounded-full bg-bg-panel-alt overflow-hidden">
+                  <div className={`h-full rounded-full ${barColorClass}`} style={{ width: `${barWidthPct}%` }} />
+                </div>
+                <span className="font-mono text-[10.5px] text-muted w-14 text-right shrink-0">
+                  {f.value > 0 ? "+" : ""}
+                  {f.value.toFixed(3)}
+                </span>
+                <span className={`shrink-0 ${iconColorClass}`}>
+                  <ArrowIcon direction={direction} />
+                </span>
               </div>
-              <span className="font-mono text-[10.5px] text-muted w-14 text-right shrink-0">
-                {f.value > 0 ? "+" : ""}
-                {f.value.toFixed(3)}
-              </span>
-              <span className={`shrink-0 ${iconColorClass}`}>
-                <ArrowIcon direction={direction} />
-              </span>
-            </div>
-          );
-        })}
-      </div>
-
-      <div className="mt-5 pt-4 border-t border-line">
-        <div className="text-[11px] font-semibold uppercase tracking-wider text-accent mb-2 flex items-center gap-2">
-          <span className="w-2 h-2 bg-accent rounded-sm inline-block" />
-          Recommended actions
+            );
+          })}
         </div>
+      </section>
+
+      <section className="mt-5 pt-4 border-t border-line">
+        <div className="flex items-center gap-2 mb-1">
+          <span className="w-2 h-2 bg-accent rounded-sm inline-block shrink-0" />
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-accent">
+            Priority actions
+          </span>
+        </div>
+        <p className="text-[10.5px] text-faint mb-2.5">
+          Recommended based on this zone's ranking and contributing factors.
+        </p>
 
         <button
           type="button"
           onClick={() => onActionsClick?.(zone.recommendations)}
-          className="w-full text-left rounded-lg border border-line hover:border-accent/50 bg-bg-panel-alt/40 hover:bg-bg-panel-alt transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          className="group w-full text-left rounded-lg border border-line hover:border-accent/50 bg-bg-panel-alt/40 hover:bg-bg-panel-alt transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         >
           <ul className="list-none">
             {zone.recommendations.map((rec, i) => (
               <li
                 key={i}
-                className="flex items-start gap-2.5 py-2.5 px-3 border-b border-line-soft last:border-none hover:bg-accent/5 transition-colors"
+                className="flex items-start gap-2.5 py-2.5 px-3 border-b border-line-soft last:border-none group-hover:bg-accent/5 transition-colors"
               >
                 <span className="mt-0.5 shrink-0 w-5 h-5 rounded-full bg-accent/15 text-accent flex items-center justify-center font-mono text-[10px] font-semibold">
                   {i + 1}
@@ -132,11 +149,18 @@ export default function DetailPanel({
               </li>
             ))}
           </ul>
+          <div className="flex items-center justify-end gap-1 px-3 py-2 border-t border-line-soft bg-bg-panel-alt/30 group-hover:bg-accent/5 text-[10.5px] text-faint group-hover:text-accent transition-colors rounded-b-lg">
+            Log to rehabilitation activity
+            <ChevronRightIcon className="group-hover:translate-x-0.5 transition-transform" />
+          </div>
         </button>
-      </div>
+      </section>
 
       {zone.confidence_flag !== "ok" && (
-        <div role="status" className="mt-4 flex items-start gap-1.5 text-[11px] text-muted pl-0.5">
+        <div
+          role="status"
+          className="mt-4 flex items-start gap-2 text-[11px] text-muted rounded-lg border border-risk-moderate/30 bg-risk-moderate/5 px-3 py-2.5"
+        >
           <AlertIcon className="mt-0.5 shrink-0 text-risk-moderate" />
           <span>
             <span className="font-mono text-risk-moderate font-medium">Low confidence</span>
